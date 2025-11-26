@@ -29,6 +29,20 @@ export interface PaginationParams {
   limit?: number
 }
 
+export type SortDirection = 'asc' | 'desc'
+
+export type ParticipantSortField =
+  | 'created_at'
+  | 'name'
+  | 'age'
+  | 'months'
+  | 'fee'
+
+export interface SortParams {
+  column: ParticipantSortField
+  direction?: SortDirection
+}
+
 export interface PaginatedResponse<T> {
   data: T[]
   total: number
@@ -134,12 +148,15 @@ export class ParticipantService {
 
   async search(
     filters: ParticipantFilters,
-    pagination: PaginationParams = {}
+    pagination: PaginationParams = {},
+    sort?: SortParams
   ): Promise<PaginatedResponse<Participant>> {
     const page = pagination.page || this.DEFAULT_PAGE
     const limit = pagination.limit || this.DEFAULT_LIMIT
     const from = (page - 1) * limit
     const to = from + limit - 1
+    const sortColumn = sort?.column || 'created_at'
+    const isAscending = (sort?.direction || 'desc') === 'asc'
 
     let query = supabase.from(this.TABLE_NAME).select('*', { count: 'exact' })
 
@@ -185,7 +202,7 @@ export class ParticipantService {
     }
 
     const { data, error, count } = await query
-      .order('created_at', { ascending: false })
+      .order(sortColumn, { ascending: isAscending })
       .range(from, to)
 
     if (error) {

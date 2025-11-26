@@ -1,36 +1,123 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 대화상점 인명부 (Daehwastore Register)
 
-## Getting Started
+대화상점 독서모임 참여자 정보를 관리하는 웹 애플리케이션입니다.
 
-First, run the development server:
+## 프로젝트 소개
+
+이 프로젝트는 대화상점 독서모임의 참여자, 리더, 운영자를 체계적으로 관리하기 위한 시스템입니다. 검색, 필터링, 페이징, 엑셀 내보내기 등의 기능을 제공합니다.
+
+자세한 요구사항은 [SPEC.md](SPEC.md)를 참고하세요.
+
+## 기술 스택
+
+- **Frontend**: Next.js 15.5.6, React 19, TypeScript
+- **Database**: Supabase (PostgreSQL)
+- **Styling**: Tailwind CSS 4.x, shadcn/ui
+- **Validation**: Zod
+- **Testing**: Vitest, React Testing Library
+- **Build**: Turbopack
+
+개발 로드맵은 [TASK.md](TASK.md)를 참고하세요.
+
+## 시작하기
+
+### 필수 조건
+
+- Node.js 20 이상
+- pnpm 패키지 매니저
+- Supabase 계정
+
+### 설치
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 의존성 설치
+pnpm install
+
+# 환경 변수 설정
+cp .env.local.example .env.local
+# .env.local 파일을 열어 Supabase 정보를 입력하세요
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 데이터베이스 설정
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. [Supabase](https://supabase.com)에서 새 프로젝트 생성
+2. `supabase/migrations/` 디렉토리의 SQL 파일을 순서대로 실행
+3. `.env.local`에 Supabase URL과 anon key 입력
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 개발 서버 실행
 
-## Learn More
+```bash
+# 개발 서버 시작 (http://localhost:3000)
+pnpm dev
 
-To learn more about Next.js, take a look at the following resources:
+# 테스트 실행 (watch mode)
+pnpm test
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 테스트 UI로 실행
+pnpm test:ui
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 린트 실행
+pnpm lint
+```
 
-## Deploy on Vercel
+### 프로덕션 빌드
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# 빌드
+pnpm build
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# 프로덕션 서버 시작
+pnpm start
+```
+
+## 개발 가이드
+
+### TDD 워크플로우
+
+이 프로젝트는 Test-Driven Development(TDD) 방식을 따릅니다:
+
+1. **Red**: 테스트 먼저 작성 (실패하는 테스트)
+2. **Green**: 테스트를 통과하는 최소한의 코드 작성
+3. **Refactor**: 코드 개선
+
+```bash
+# 테스트 작성
+touch lib/services/my-feature.test.ts
+
+# 테스트 실행 (실패 확인)
+pnpm test
+
+# 구현 작성
+touch lib/services/my-feature.ts
+
+# 테스트 재실행 (통과 확인)
+pnpm test
+```
+
+### 프로젝트 구조
+
+```
+app/                 # Next.js App Router
+lib/
+  ├── supabase/      # Supabase 클라이언트 및 타입
+  ├── validations/   # Zod 스키마
+  └── services/      # 비즈니스 로직
+components/          # React 컴포넌트
+supabase/migrations/ # 데이터베이스 마이그레이션
+test/                # 테스트 유틸리티
+```
+
+자세한 내용은 [CLAUDE.md](CLAUDE.md)를 참고하세요.
+
+## 주요 기능
+
+- ✅ 참여자 정보 CRUD
+- ✅ 다중 필터 검색 (성별, 나이, 이름, 전화번호 등)
+- ✅ 페이징 (15개/페이지)
+- 🚧 엑셀 내보내기
+- 🚧 Google OAuth 로그인
+- 🚧 역할 기반 접근 제어
+
+## 라이선스
+
+이 프로젝트는 비공개 프로젝트입니다.

@@ -13,13 +13,13 @@ Development roadmap for the Daehwastore Register application.
 ## Phase 1: Foundation & Authentication
 
 ### 1.1 Database Setup
-- [ ] Set up Supabase project (pending user setup)
+- [x] Set up Supabase project (pending user setup)
 - [x] Create database schema for three user roles:
   - `administrators` table (gender, name, phone)
   - `leaders` table (gender, name, phone, assigned_meeting_id)
   - `participants` table (gender, age, name, months, first_registration_month, phone, fee, re_registration, latest_registration, current_meeting, notes, past_meetings)
 - [x] Create `meetings` table for tracking different book club meetings
-- [ ] Set up Row Level Security (RLS) policies (after DB setup)
+- [x] Set up Row Level Security (RLS) policies (after DB setup)
 - [x] Create database migrations (SQL files ready in supabase/migrations/)
 
 ### 1.2 Authentication
@@ -28,8 +28,8 @@ Development roadmap for the Daehwastore Register application.
 - [x] Create authentication context/provider (Jotai atoms in lib/store/auth.ts)
 - [x] Build login page UI (app/login/page.tsx)
 - [x] Create OAuth callback route (app/auth/callback/route.ts)
-- [ ] Implement role-based access control middleware
-- [ ] Create protected route wrapper for admin-only pages
+- [x] Implement role-based access control middleware
+- [x] Create protected route wrapper for admin-only pages
 
 ### 1.3 State Management
 - [x] Install Jotai
@@ -68,7 +68,7 @@ Development roadmap for the Daehwastore Register application.
 ### 3.1 Participant List View
 - [x] Create participants list page with table display
 - [x] Implement 15 items per page pagination (using ParticipantService.search)
-- [ ] Add column sorting functionality
+- [x] Add column sorting functionality
 - [x] Show participant fields in table (name, gender, age, phone, months, fee, meeting, date)
 
 ### 3.2 Search & Filter
@@ -91,8 +91,8 @@ Development roadmap for the Daehwastore Register application.
 - [x] Implement participant creation (using ParticipantService.create)
 - [x] Create "Edit Participant" form (same component, different mode)
 - [x] Implement participant update (using ParticipantService.update)
-- [ ] Add delete confirmation dialog
-- [ ] Implement participant deletion (ParticipantService.delete exists)
+- [x] Add delete confirmation dialog
+- [x] Implement participant deletion (ParticipantService.delete exists)
 - [x] Add form validation for all fields (using Zod + react-hook-form)
 
 ### 3.4 Excel Export

@@ -11,6 +11,7 @@ export default function LoginPage() {
   const authService = new AuthService()
   const searchParams = useSearchParams()
   const errorParam = searchParams.get('error')
+  const redirectParam = searchParams.get('redirect')
 
   useEffect(() => {
     if (!errorParam) {
@@ -35,7 +36,7 @@ export default function LoginPage() {
     try {
       setLoading(true)
       setError(null)
-      await authService.signInWithGoogle()
+      await authService.signInWithGoogle(redirectParam || '/participants')
     } catch (err) {
       setError(err instanceof Error ? err.message : '로그인에 실패했습니다.')
     } finally {

@@ -11,6 +11,9 @@ export interface User {
 // Base atom for user state
 export const userAtom = atom<User | null>(null)
 
+// Hydration flag to avoid redirects before we know auth state
+export const authInitializedAtom = atom(false)
+
 // Derived atom for user role
 export const userRoleAtom = atom((get) => {
   const user = get(userAtom)

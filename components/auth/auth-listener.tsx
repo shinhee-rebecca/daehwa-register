@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useSetAtom } from 'jotai'
 import { AuthService } from '@/lib/services/auth'
-import { userAtom } from '@/lib/store/auth'
+import { authInitializedAtom, userAtom } from '@/lib/store/auth'
 
 const UNAUTHORIZED_CODE = 'unauthorized'
 
@@ -16,6 +16,7 @@ function redirectToLoginWithError(code: string) {
 
 export function AuthListener() {
   const setUser = useSetAtom(userAtom)
+  const setInitialized = useSetAtom(authInitializedAtom)
 
   useEffect(() => {
     const authService = new AuthService()
@@ -32,6 +33,8 @@ export function AuthListener() {
         setUser(user)
       } catch {
         handleUnauthorized()
+      } finally {
+        setInitialized(true)
       }
     }
 
@@ -45,7 +48,7 @@ export function AuthListener() {
     return () => {
       subscription?.unsubscribe?.()
     }
-  }, [setUser])
+  }, [setInitialized, setUser])
 
   return null
 }

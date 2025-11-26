@@ -27,19 +27,19 @@ describe('ParticipantFilters', () => {
     expect(clearButton).toBeDefined()
   })
 
-  it('should call onFilterChange when name input changes', async () => {
-    const mockOnFilterChange = vi.fn()
+  it('should call onSearch when clicking search button', async () => {
+    const mockOnSearch = vi.fn()
 
     render(
       <Provider>
-        <ParticipantFilters onFilterChange={mockOnFilterChange} />
+        <ParticipantFilters onSearch={mockOnSearch} />
       </Provider>
     )
 
-    const nameInput = screen.getByPlaceholderText('이름 검색') as HTMLInputElement
-    fireEvent.change(nameInput, { target: { value: '홍길동' } })
+    const searchButton = screen.getByText('조회하기')
+    fireEvent.click(searchButton)
 
-    expect(nameInput.value).toBe('홍길동')
+    expect(mockOnSearch).toHaveBeenCalled()
   })
 
   it('should have age range inputs', () => {

@@ -2,7 +2,11 @@
 
 import { useState } from 'react'
 import { useAtom } from 'jotai'
-import { participantFiltersAtom, resetFiltersAtom } from '@/lib/store/participant'
+import {
+  paginationAtom,
+  participantFiltersAtom,
+  resetFiltersAtom,
+} from '@/lib/store/participant'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,12 +21,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Search, X } from 'lucide-react'
 
 interface ParticipantFiltersProps {
-  onFilterChange?: () => void
+  onSearch?: () => void
 }
 
-export function ParticipantFilters({ onFilterChange }: ParticipantFiltersProps) {
+export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
   const [filters, setFilters] = useAtom(participantFiltersAtom)
   const [, resetFilters] = useAtom(resetFiltersAtom)
+  const [, setPagination] = useAtom(paginationAtom)
 
   const [localFilters, setLocalFilters] = useState({
     name: filters.name || '',
@@ -35,112 +40,94 @@ export function ParticipantFilters({ onFilterChange }: ParticipantFiltersProps) 
     months_max: filters.months_max?.toString() || '',
     first_registration_month: filters.first_registration_month || '',
     latest_registration: filters.latest_registration || '',
+    gender: filters.gender || 'all',
+    re_registration:
+      filters.re_registration === undefined
+        ? 'all'
+        : filters.re_registration
+          ? 'true'
+          : 'false',
+  })
+
+  const parseNumber = (value: string) => {
+    const numValue = parseInt(value, 10)
+    return Number.isNaN(numValue) ? undefined : numValue
+  }
+
+  const buildFilters = () => ({
+    name: localFilters.name || undefined,
+    phone: localFilters.phone || undefined,
+    age_min: parseNumber(localFilters.age_min),
+    age_max: parseNumber(localFilters.age_max),
+    fee_min: parseNumber(localFilters.fee_min),
+    fee_max: parseNumber(localFilters.fee_max),
+    months_min: parseNumber(localFilters.months_min),
+    months_max: parseNumber(localFilters.months_max),
+    first_registration_month: localFilters.first_registration_month || undefined,
+    latest_registration: localFilters.latest_registration || undefined,
+    gender:
+      localFilters.gender === 'all'
+        ? undefined
+        : (localFilters.gender as 'male' | 'female'),
+    re_registration:
+      localFilters.re_registration === 'all'
+        ? undefined
+        : localFilters.re_registration === 'true',
   })
 
   const handleNameChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, name: value }))
-    setFilters((prev) => ({ ...prev, name: value || undefined }))
-    onFilterChange?.()
   }
 
   const handlePhoneChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, phone: value }))
-    setFilters((prev) => ({ ...prev, phone: value || undefined }))
-    onFilterChange?.()
   }
 
   const handleGenderChange = (value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      gender: value === 'all' ? undefined : (value as 'male' | 'female'),
-    }))
-    onFilterChange?.()
+    setLocalFilters((prev) => ({ ...prev, gender: value }))
   }
 
   const handleAgeMinChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, age_min: value }))
-    const numValue = parseInt(value)
-    setFilters((prev) => ({
-      ...prev,
-      age_min: isNaN(numValue) ? undefined : numValue,
-    }))
-    onFilterChange?.()
   }
 
   const handleAgeMaxChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, age_max: value }))
-    const numValue = parseInt(value)
-    setFilters((prev) => ({
-      ...prev,
-      age_max: isNaN(numValue) ? undefined : numValue,
-    }))
-    onFilterChange?.()
   }
 
   const handleFeeMinChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, fee_min: value }))
-    const numValue = parseInt(value)
-    setFilters((prev) => ({
-      ...prev,
-      fee_min: isNaN(numValue) ? undefined : numValue,
-    }))
-    onFilterChange?.()
   }
 
   const handleFeeMaxChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, fee_max: value }))
-    const numValue = parseInt(value)
-    setFilters((prev) => ({
-      ...prev,
-      fee_max: isNaN(numValue) ? undefined : numValue,
-    }))
-    onFilterChange?.()
   }
 
   const handleMonthsMinChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, months_min: value }))
-    const numValue = parseInt(value)
-    setFilters((prev) => ({
-      ...prev,
-      months_min: isNaN(numValue) ? undefined : numValue,
-    }))
-    onFilterChange?.()
   }
 
   const handleMonthsMaxChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, months_max: value }))
-    const numValue = parseInt(value)
-    setFilters((prev) => ({
-      ...prev,
-      months_max: isNaN(numValue) ? undefined : numValue,
-    }))
-    onFilterChange?.()
   }
 
   const handleFirstRegistrationMonthChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, first_registration_month: value }))
-    setFilters((prev) => ({
-      ...prev,
-      first_registration_month: value || undefined,
-    }))
-    onFilterChange?.()
   }
 
   const handleLatestRegistrationChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, latest_registration: value }))
-    setFilters((prev) => ({
-      ...prev,
-      latest_registration: value || undefined,
-    }))
-    onFilterChange?.()
   }
 
   const handleReRegistrationChange = (value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      re_registration: value === 'all' ? undefined : value === 'true',
-    }))
-    onFilterChange?.()
+    setLocalFilters((prev) => ({ ...prev, re_registration: value }))
+  }
+
+  const handleSearch = () => {
+    const nextFilters = buildFilters()
+    setFilters(nextFilters)
+    setPagination((prev) => ({ ...prev, page: 1 }))
+    onSearch?.()
   }
 
   const handleReset = () => {
@@ -155,9 +142,12 @@ export function ParticipantFilters({ onFilterChange }: ParticipantFiltersProps) 
       months_max: '',
       first_registration_month: '',
       latest_registration: '',
+      gender: 'all',
+      re_registration: 'all',
     })
     resetFilters()
-    onFilterChange?.()
+    setPagination((prev) => ({ ...prev, page: 1 }))
+    onSearch?.()
   }
 
   return (
@@ -185,7 +175,7 @@ export function ParticipantFilters({ onFilterChange }: ParticipantFiltersProps) 
           <div className="space-y-2">
             <Label htmlFor="gender">성별</Label>
             <Select
-              value={filters.gender || 'all'}
+              value={localFilters.gender}
               onValueChange={handleGenderChange}
             >
               <SelectTrigger id="gender">
@@ -293,13 +283,7 @@ export function ParticipantFilters({ onFilterChange }: ParticipantFiltersProps) 
           <div className="space-y-2">
             <Label htmlFor="re_registration">재등록 여부</Label>
             <Select
-              value={
-                filters.re_registration === undefined
-                  ? 'all'
-                  : filters.re_registration
-                    ? 'true'
-                    : 'false'
-              }
+              value={localFilters.re_registration}
               onValueChange={handleReRegistrationChange}
             >
               <SelectTrigger id="re_registration">
@@ -314,12 +298,17 @@ export function ParticipantFilters({ onFilterChange }: ParticipantFiltersProps) 
           </div>
         </div>
 
-        {/* Clear Button */}
-        <div className="mt-4 flex justify-end">
-          <Button variant="outline" onClick={handleReset}>
-            <X className="mr-2 h-4 w-4" />
-            필터 초기화
-          </Button>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-stone-500">
+            조건을 모두 입력한 뒤 <span className="font-semibold text-stone-700">조회하기</span>를 누르면 검색합니다.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={handleReset}>
+              <X className="mr-2 h-4 w-4" />
+              필터 초기화
+            </Button>
+            <Button onClick={handleSearch}>조회하기</Button>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -49,6 +49,7 @@ export default function ParticipantsPage() {
     column: 'created_at',
     direction: 'desc',
   })
+  const [searchVersion, setSearchVersion] = useState(1)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [participantToDelete, setParticipantToDelete] = useState<Participant | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -76,7 +77,12 @@ export default function ParticipantsPage() {
   useEffect(() => {
     fetchParticipants()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, pagination, sort])
+  }, [pagination, sort, searchVersion])
+
+  const handleSearch = () => {
+    setPagination((prev) => ({ ...prev, page: 1 }))
+    setSearchVersion((prev) => prev + 1)
+  }
 
   const handleAddClick = () => {
     setSelectedParticipant(null)
@@ -177,7 +183,7 @@ export default function ParticipantsPage() {
       </div>
 
       <div className="mb-6">
-        <ParticipantFilters />
+        <ParticipantFilters onSearch={handleSearch} />
       </div>
 
       <div className="rounded-md border">

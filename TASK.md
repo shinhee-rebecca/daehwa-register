@@ -106,22 +106,22 @@ Development roadmap for the Daehwastore Register application.
 ## Phase 4: Leader Management (Admin Features)
 
 ### 4.1 Leader List View
-- [ ] Create leaders list page
-- [ ] Display leader information in table
-- [ ] Show assigned meetings for each leader
+- [x] Create leaders list page
+- [x] Display leader information in table
+- [x] Show assigned meetings for each leader
 
 ### 4.2 Leader CRUD
-- [ ] Create "Add Leader" form
-- [ ] Implement leader creation with Google account registration
-- [ ] Create "Edit Leader" form (including meeting assignments)
-- [ ] Implement leader update API route
-- [ ] Add delete confirmation for leaders
-- [ ] Implement leader deletion (revoke access)
+- [x] Create "Add Leader" form
+- [x] Implement leader creation with Google account registration
+- [x] Create "Edit Leader" form (including meeting assignments)
+- [x] Implement leader update API route
+- [x] Add delete confirmation for leaders
+- [x] Implement leader deletion (revoke access)
 
 ### 4.3 Meeting Assignment
-- [ ] Create interface to assign leaders to meetings
-- [ ] Allow multiple leaders per meeting (if needed)
-- [ ] Show leader-meeting relationships clearly
+- [x] Create interface to assign leaders to meetings
+- [x] Allow multiple leaders per meeting (if needed)
+- [x] Show leader-meeting relationships clearly
 
 ---
 

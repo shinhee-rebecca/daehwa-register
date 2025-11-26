@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AuthService } from '@/lib/services/auth'
 import { Button } from '@/components/ui/button'
 
@@ -8,6 +9,27 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const authService = new AuthService()
+  const searchParams = useSearchParams()
+  const errorParam = searchParams.get('error')
+
+  useEffect(() => {
+    if (!errorParam) {
+      return
+    }
+
+    const message =
+      errorParam === 'unauthorized'
+        ? '등록되지 않은 Google 계정입니다. 관리자에게 문의하세요.'
+        : errorParam
+
+    setError(message)
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('error')
+      window.history.replaceState(null, '', url.toString())
+    }
+  }, [errorParam])
 
   const handleGoogleLogin = async () => {
     try {

@@ -4,8 +4,8 @@ export const meetingSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().min(1, '모임 이름은 필수입니다'),
   description: z.string().nullable().optional(),
-  created_at: z.string().datetime().optional(),
-  updated_at: z.string().datetime().optional(),
+  created_at: z.string().datetime({ offset: true }).optional(),
+  updated_at: z.string().datetime({ offset: true }).optional(),
 })
 
 export const createMeetingSchema = meetingSchema.omit({

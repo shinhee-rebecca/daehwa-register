@@ -17,8 +17,8 @@ export const participantSchema = z.object({
   current_meeting_id: z.string().uuid().nullable().optional(),
   notes: z.string().nullable().optional(),
   past_meetings: z.array(z.string()).default([]),
-  created_at: z.string().datetime().optional(),
-  updated_at: z.string().datetime().optional(),
+  created_at: z.string().datetime({ offset: true }).optional(),
+  updated_at: z.string().datetime({ offset: true }).optional(),
 })
 
 export const createParticipantSchema = participantSchema.omit({

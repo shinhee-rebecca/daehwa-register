@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       administrators: {
         Row: {
+          google_email: string
           created_at: string
           gender: string
           id: string
@@ -19,6 +20,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          google_email: string
           created_at?: string
           gender: string
           id?: string
@@ -27,6 +29,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          google_email?: string
           created_at?: string
           gender?: string
           id?: string

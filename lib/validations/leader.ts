@@ -9,8 +9,8 @@ export const leaderSchema = z.object({
   phone: z.string().regex(phoneRegex, '올바른 전화번호 형식이 아닙니다'),
   assigned_meeting_id: z.string().uuid().nullable().optional(),
   google_email: z.string().email('올바른 이메일 형식이 아닙니다'),
-  created_at: z.string().datetime().optional(),
-  updated_at: z.string().datetime().optional(),
+  created_at: z.string().datetime({ offset: true }).optional(),
+  updated_at: z.string().datetime({ offset: true }).optional(),
 })
 
 export const createLeaderSchema = leaderSchema.omit({

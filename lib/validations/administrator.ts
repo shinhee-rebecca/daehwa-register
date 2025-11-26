@@ -7,8 +7,8 @@ export const administratorSchema = z.object({
   gender: z.enum(['male', 'female']),
   name: z.string().min(1, '이름은 필수입니다'),
   phone: z.string().regex(phoneRegex, '올바른 전화번호 형식이 아닙니다'),
-  created_at: z.string().datetime().optional(),
-  updated_at: z.string().datetime().optional(),
+  created_at: z.string().datetime({ offset: true }).optional(),
+  updated_at: z.string().datetime({ offset: true }).optional(),
 })
 
 export const createAdministratorSchema = administratorSchema.omit({

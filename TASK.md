@@ -13,82 +13,87 @@ Development roadmap for the Daehwastore Register application.
 ## Phase 1: Foundation & Authentication
 
 ### 1.1 Database Setup
-- [ ] Set up Supabase project
-- [ ] Create database schema for three user roles:
+- [ ] Set up Supabase project (pending user setup)
+- [x] Create database schema for three user roles:
   - `administrators` table (gender, name, phone)
   - `leaders` table (gender, name, phone, assigned_meeting_id)
   - `participants` table (gender, age, name, months, first_registration_month, phone, fee, re_registration, latest_registration, current_meeting, notes, past_meetings)
-- [ ] Create `meetings` table for tracking different book club meetings
-- [ ] Set up Row Level Security (RLS) policies
-- [ ] Create database migrations
+- [x] Create `meetings` table for tracking different book club meetings
+- [ ] Set up Row Level Security (RLS) policies (after DB setup)
+- [x] Create database migrations (SQL files ready in supabase/migrations/)
 
 ### 1.2 Authentication
-- [ ] Install and configure Supabase client
-- [ ] Implement Google OAuth login flow
-- [ ] Create authentication context/provider
-- [ ] Build login page UI
+- [x] Install and configure Supabase client
+- [x] Implement Google OAuth login flow (AuthService in lib/services/auth.ts)
+- [x] Create authentication context/provider (Jotai atoms in lib/store/auth.ts)
+- [x] Build login page UI (app/login/page.tsx)
+- [x] Create OAuth callback route (app/auth/callback/route.ts)
 - [ ] Implement role-based access control middleware
 - [ ] Create protected route wrapper for admin-only pages
 
 ### 1.3 State Management
-- [ ] Install Jotai
-- [ ] Set up atoms for:
-  - User authentication state
-  - Current user role
-  - Participant filters/search state
-  - Pagination state
+- [x] Install Jotai
+- [x] Set up atoms for:
+  - User authentication state (lib/store/auth.ts)
+  - Current user role (derived atom)
+  - Participant filters/search state (lib/store/participant.ts)
+  - Pagination state (lib/store/participant.ts)
 
 ---
 
 ## Phase 2: Core UI Components
 
 ### 2.1 Layout & Navigation
-- [ ] Create main layout with navigation bar
-- [ ] Build role-based navigation menu (admin vs leader views)
-- [ ] Add user profile dropdown with logout
+- [x] Create main layout with navigation bar
+- [x] Build role-based navigation menu (admin vs leader views)
+- [x] Add user profile dropdown with logout
 - [ ] Implement responsive design for mobile/tablet
 
 ### 2.2 Reusable Components (shadcn/ui)
-- [ ] Add Table component for participant lists
-- [ ] Add Form components (Input, Select, Button, etc.)
-- [ ] Add Dialog/Modal for create/edit forms
-- [ ] Add Pagination component
-- [ ] Add Search/Filter component
-- [ ] Add Data export button
+- [x] Add Table component for participant lists
+- [x] Add Form components (Input, Select, Button, etc.)
+- [x] Add Dialog/Modal for create/edit forms
+- [x] Add Pagination component
+- [x] Add Card component for data display
+- [x] Add Badge component for status indicators
+- [x] Add Tabs component for organizing content
+- [x] Add Toast/Sonner for notifications
+- [ ] Add Search/Filter component (will implement with participant features)
+- [ ] Add Data export button (will implement with Excel export)
 
 ---
 
 ## Phase 3: Participant Management (Admin Features)
 
 ### 3.1 Participant List View
-- [ ] Create participants list page with table display
-- [ ] Implement 15 items per page pagination
+- [x] Create participants list page with table display
+- [x] Implement 15 items per page pagination (using ParticipantService.search)
 - [ ] Add column sorting functionality
-- [ ] Show all participant fields in table
+- [x] Show participant fields in table (name, gender, age, phone, months, fee, meeting, date)
 
 ### 3.2 Search & Filter
-- [ ] Implement multi-field search:
-  - Gender filter
-  - Age range filter
-  - Name search (partial match)
-  - Months filter
-  - First registration month filter
-  - Phone number search
-  - Fee filter
-  - Re-registration status filter
-  - Latest registration filter
-  - Current meeting filter
-- [ ] Add "Clear all filters" button
-- [ ] Persist filter state in URL query params
+- [x] Implement multi-field search:
+  - [x] Gender filter
+  - [x] Age range filter
+  - [x] Name search (partial match)
+  - [x] Months filter
+  - [x] First registration month filter
+  - [x] Phone number search
+  - [x] Fee filter
+  - [x] Re-registration status filter
+  - [x] Latest registration filter
+  - [ ] Current meeting filter (waiting for meetings implementation)
+- [x] Add "Clear all filters" button
+- [ ] Persist filter state in URL query params (deferred to later)
 
 ### 3.3 CRUD Operations
-- [ ] Create "Add Participant" form with all fields
-- [ ] Implement participant creation API route
-- [ ] Create "Edit Participant" form
-- [ ] Implement participant update API route
+- [x] Create "Add Participant" form with all fields
+- [x] Implement participant creation (using ParticipantService.create)
+- [x] Create "Edit Participant" form (same component, different mode)
+- [x] Implement participant update (using ParticipantService.update)
 - [ ] Add delete confirmation dialog
-- [ ] Implement participant deletion API route
-- [ ] Add form validation for all fields
+- [ ] Implement participant deletion (ParticipantService.delete exists)
+- [x] Add form validation for all fields (using Zod + react-hook-form)
 
 ### 3.4 Excel Export
 - [ ] Install Excel export library (e.g., xlsx or exceljs)

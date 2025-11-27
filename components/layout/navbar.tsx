@@ -44,6 +44,9 @@ export function Navbar() {
               <Link href="/leaders">
                 <Button variant="ghost">리더 관리</Button>
               </Link>
+              <Link href="/meetings">
+                <Button variant="ghost">모임 관리</Button>
+              </Link>
             </div>
           )}
           {role === 'leader' && (

@@ -9,12 +9,12 @@ const participationMonthRegex = /^\d{4}$/
 export const participantSchema = z.object({
   id: z.string().uuid().optional(),
   gender: z.enum(['male', 'female']),
-  age: z.number().int().positive(),
+  age: z.number().int().min(1900).max(2100), // 출생 년도 (1900-2100)
   name: z.string().min(1, '이름은 필수입니다'),
   months: z.number().int().min(0).default(0),
   first_registration_month: z.string().regex(/^\d{4}-\d{2}$/, '올바른 형식이 아닙니다 (YYYY-MM)'),
   phone: z.string().regex(phoneRegex, '올바른 전화번호 형식이 아닙니다'),
-  fee: z.number().int().min(0),
+  fee: z.number().int(), // 음수 허용 (환불 케이스)
   re_registration: z.boolean().default(false),
   latest_registration: z.string().regex(/^\d{4}-\d{2}$/, '올바른 형식이 아닙니다 (YYYY-MM)'),
   current_meeting_id: z.string().uuid().nullable().optional(),

@@ -97,4 +97,44 @@ export class MeetingService {
       throw new Error(`모임 삭제 실패: ${error.message}`)
     }
   }
+
+  /**
+   * 이름으로 모임 찾기
+   *
+   * @param name - 모임 이름
+   * @returns 찾은 모임 또는 null
+   */
+  async findByName(name: string): Promise<Meeting | null> {
+    const { data, error } = await supabase
+      .from('meetings')
+      .select('*')
+      .eq('name', name)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null
+      }
+      throw new Error(`모임 조회 실패: ${error.message}`)
+    }
+
+    return meetingSchema.parse(data)
+  }
+
+  /**
+   * 이름으로 모임을 찾거나, 없으면 새로 생성
+   *
+   * @param name - 모임 이름
+   * @returns 찾았거나 생성한 모임
+   */
+  async findOrCreate(name: string): Promise<Meeting> {
+    // 먼저 이름으로 찾기
+    const existing = await this.findByName(name)
+    if (existing) {
+      return existing
+    }
+
+    // 없으면 새로 생성
+    return await this.create({ name })
+  }
 }

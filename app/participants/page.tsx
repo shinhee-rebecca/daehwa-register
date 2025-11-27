@@ -37,12 +37,14 @@ import {
 } from '@/components/ui/dialog'
 import { ParticipantFilters } from '@/components/participants/participant-filters'
 import { ParticipantForm } from '@/components/participants/participant-form'
-import { ArrowUpDown, Download, Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ArrowUpDown, Download, Loader2, Pencil, Plus, Trash2, Upload } from 'lucide-react'
 import {
   createParticipantsExcelBlob,
   downloadExcelFile,
+  importParticipantsFromExcel,
 } from '@/lib/utils/excel'
 import { toast } from 'sonner'
+import { createParticipantSchema } from '@/lib/validations/participant'
 
 export default function ParticipantsPage() {
   const [filters] = useAtom(participantFiltersAtom)
@@ -64,6 +66,7 @@ export default function ParticipantsPage() {
   const [exporting, setExporting] = useState(false)
   const [meetingOptions, setMeetingOptions] = useState<MeetingOption[]>([])
   const [meetingsLoading, setMeetingsLoading] = useState(true)
+  const [importing, setImporting] = useState(false)
 
   const fetchParticipants = async () => {
     setLoading(true)
@@ -264,6 +267,100 @@ export default function ParticipantsPage() {
     }
   }
 
+  const handleImportExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setImporting(true)
+    try {
+      const importedData = await importParticipantsFromExcel(file)
+
+      if (importedData.length === 0) {
+        toast.error('가져올 데이터가 없습니다')
+        return
+      }
+
+      const participantService = new ParticipantService()
+      const meetingService = new MeetingService()
+      let successCount = 0
+      let errorCount = 0
+      let skipCount = 0
+      const createdMeetings = new Set<string>()
+
+      for (const data of importedData) {
+        try {
+          // 모임 이름이 있으면 모임을 찾거나 생성
+          let meetingId: string | null = null
+          if (data.meetingName) {
+            const meeting = await meetingService.findOrCreate(data.meetingName)
+            meetingId = meeting.id || null
+            if (meeting.id && !createdMeetings.has(meeting.id)) {
+              createdMeetings.add(meeting.id)
+            }
+          }
+
+          // 중복 체크
+          const isDuplicate = await participantService.isDuplicate(
+            data.name || '',
+            data.phone || '',
+            data.participation_month || null,
+            meetingId
+          )
+
+          if (isDuplicate) {
+            skipCount++
+            continue
+          }
+
+          // 참여자 데이터 준비 (meetingName은 DB에 저장하지 않음)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { meetingName, ...participantData } = data
+          const participantWithMeeting = {
+            ...participantData,
+            current_meeting_id: meetingId,
+          }
+
+          const validatedData = createParticipantSchema.parse(participantWithMeeting)
+          await participantService.create(validatedData)
+          successCount++
+        } catch (error) {
+          console.error('Failed to import participant:', error)
+          errorCount++
+        }
+      }
+
+      if (successCount > 0) {
+        let message = `${successCount}개의 참여자가 추가되었습니다`
+        if (skipCount > 0) {
+          message += ` (${skipCount}개 중복 제외)`
+        }
+        if (errorCount > 0) {
+          message += ` (${errorCount}개 실패)`
+        }
+        toast.success(message)
+        fetchParticipants()
+        // 모임 목록도 새로고침
+        const options = await meetingService.listNames()
+        setMeetingOptions(options)
+      } else {
+        if (skipCount > 0) {
+          toast.info(`모든 데이터가 중복입니다 (${skipCount}개)`)
+        } else {
+          toast.error('참여자 추가에 실패했습니다')
+        }
+      }
+    } catch (error) {
+      console.error('Excel import error:', error)
+      toast.error(
+        error instanceof Error ? error.message : 'Excel 가져오기 실패'
+      )
+    } finally {
+      setImporting(false)
+      // 파일 input 초기화
+      event.target.value = ''
+    }
+  }
+
   return (
     <ProtectedRoute allowedRoles={['admin']}>
       <div className="container mx-auto py-4 px-4 md:py-8">
@@ -348,7 +445,7 @@ export default function ParticipantsPage() {
                   <TableRow key={participant.id}>
                     <TableCell className="font-medium">{participant.name}</TableCell>
                     <TableCell>{participant.gender === 'male' ? '남성' : '여성'}</TableCell>
-                    <TableCell>{participant.age}세</TableCell>
+                    <TableCell>{participant.age}년생</TableCell>
                     <TableCell>{participant.phone}</TableCell>
                     <TableCell>{participant.months}개월</TableCell>
                     <TableCell>{participant.fee.toLocaleString()}원</TableCell>
@@ -388,50 +485,80 @@ export default function ParticipantsPage() {
         </div>
 
         {!loading && totalPages > 0 && (
-          <div className="mt-4 flex flex-col items-center gap-2">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(event) => {
-                      event.preventDefault()
-                      handlePageChange((pagination.page || 1) - 1)
-                    }}
-                    className="cursor-pointer"
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages }, (_, index) => {
-                  const pageNumber = index + 1
-                  return (
-                    <PaginationItem key={pageNumber}>
-                      <PaginationLink
-                        href="#"
-                        isActive={pagination.page === pageNumber}
-                        onClick={(event) => {
-                          event.preventDefault()
-                          handlePageChange(pageNumber)
-                        }}
-                      >
-                        {pageNumber}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )
-                })}
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(event) => {
-                      event.preventDefault()
-                      handlePageChange((pagination.page || 1) + 1)
-                    }}
-                    className="cursor-pointer"
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-            <div className="text-sm text-stone-500">
-              페이지 {pagination.page} / {totalPages}
+          <div className="mt-4 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
+            {/* Excel Import Button - 좌하단 */}
+            <div>
+              <input
+                type="file"
+                id="excel-import"
+                accept=".xlsx,.xls"
+                onChange={handleImportExcel}
+                className="hidden"
+              />
+              <label htmlFor="excel-import">
+                <Button
+                  variant="outline"
+                  disabled={importing}
+                  asChild
+                >
+                  <span className="cursor-pointer">
+                    {importing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="mr-2 h-4 w-4" />
+                    )}
+                    Excel로 데이터 가져오기
+                  </span>
+                </Button>
+              </label>
+            </div>
+
+            {/* Pagination - 우하단 */}
+            <div className="flex flex-col items-center gap-2">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        handlePageChange((pagination.page || 1) - 1)
+                      }}
+                      className="cursor-pointer"
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: totalPages }, (_, index) => {
+                    const pageNumber = index + 1
+                    return (
+                      <PaginationItem key={pageNumber}>
+                        <PaginationLink
+                          href="#"
+                          isActive={pagination.page === pageNumber}
+                          onClick={(event) => {
+                            event.preventDefault()
+                            handlePageChange(pageNumber)
+                          }}
+                        >
+                          {pageNumber}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  })}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(event) => {
+                        event.preventDefault()
+                        handlePageChange((pagination.page || 1) + 1)
+                      }}
+                      className="cursor-pointer"
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+              <div className="text-sm text-stone-500">
+                페이지 {pagination.page} / {totalPages}
+              </div>
             </div>
           </div>
         )}

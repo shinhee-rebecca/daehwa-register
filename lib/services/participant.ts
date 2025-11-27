@@ -289,4 +289,46 @@ export class ParticipantService {
 
     return data.map((item) => participantSchema.parse(item))
   }
+
+  /**
+   * 중복 참여자 체크 (이름, 전화번호, 참여월, 모임 ID 모두 일치 시 중복)
+   *
+   * @param name - 참여자 이름
+   * @param phone - 전화번호
+   * @param participationMonth - 참여월
+   * @param meetingId - 모임 ID
+   * @returns 중복된 참여자가 있으면 true, 없으면 false
+   */
+  async isDuplicate(
+    name: string,
+    phone: string,
+    participationMonth: string | null,
+    meetingId: string | null
+  ): Promise<boolean> {
+    let query = supabase
+      .from(this.TABLE_NAME)
+      .select('id')
+      .eq('name', name)
+      .eq('phone', phone)
+
+    if (participationMonth) {
+      query = query.eq('participation_month', participationMonth)
+    } else {
+      query = query.is('participation_month', null)
+    }
+
+    if (meetingId) {
+      query = query.eq('current_meeting_id', meetingId)
+    } else {
+      query = query.is('current_meeting_id', null)
+    }
+
+    const { data, error } = await query.limit(1)
+
+    if (error) {
+      throw new Error(`중복 체크 실패: ${error.message}`)
+    }
+
+    return data && data.length > 0
+  }
 }

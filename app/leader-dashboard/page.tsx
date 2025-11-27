@@ -27,45 +27,36 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { ParticipantFilters } from '@/components/participants/participant-filters'
-import { ParticipantForm } from '@/components/participants/participant-form'
-import { ArrowUpDown, Download, Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { ArrowUpDown, Download, Loader2 } from 'lucide-react'
 import {
   createParticipantsExcelBlob,
   downloadExcelFile,
 } from '@/lib/utils/excel'
 import { toast } from 'sonner'
+import { userAtom } from '@/lib/store/auth'
 
-export default function ParticipantsPage() {
+export default function LeaderDashboardPage() {
+  const [user] = useAtom(userAtom)
   const [filters] = useAtom(participantFiltersAtom)
   const [pagination, setPagination] = useAtom(paginationAtom)
   const [participants, setParticipants] = useState<Participant[]>([])
   const [loading, setLoading] = useState(true)
   const [totalPages, setTotalPages] = useState(0)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null)
   const [sort, setSort] = useState<SortParams>({
     column: 'created_at',
     direction: 'desc',
   })
   const [searchVersion, setSearchVersion] = useState(1)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [participantToDelete, setParticipantToDelete] = useState<Participant | null>(null)
-  const [deleting, setDeleting] = useState(false)
-  const [actionError, setActionError] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
 
   const fetchParticipants = async () => {
     setLoading(true)
     try {
       const service = new ParticipantService()
+
+      // TODO: 리더의 assigned_meeting_id를 가져와서 필터에 추가
+      // 현재는 모든 데이터를 보여주지만, 추후 리더의 meeting만 필터링
       const result = await service.search(filters, pagination, sort)
       setParticipants(result.data)
       setTotalPages(result.totalPages)
@@ -76,6 +67,7 @@ export default function ParticipantsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch participants:', error)
+      toast.error('참여자 목록을 불러오는 데 실패했습니다')
     } finally {
       setLoading(false)
     }
@@ -89,35 +81,6 @@ export default function ParticipantsPage() {
   const handleSearch = () => {
     setPagination((prev) => ({ ...prev, page: 1 }))
     setSearchVersion((prev) => prev + 1)
-  }
-
-  const handleAddClick = () => {
-    setSelectedParticipant(null)
-    setIsDialogOpen(true)
-  }
-
-  const handleEditClick = (participant: Participant) => {
-    setSelectedParticipant(participant)
-    setIsDialogOpen(true)
-  }
-
-  const handleDeleteClick = (participant: Participant) => {
-    setParticipantToDelete(participant)
-    setActionError(null)
-    setIsDeleteDialogOpen(true)
-  }
-
-  const handleSuccess = () => {
-    setSelectedParticipant(null)
-    setIsDialogOpen(false)
-    fetchParticipants()
-  }
-
-  const handleDialogChange = (open: boolean) => {
-    setIsDialogOpen(open)
-    if (!open) {
-      setSelectedParticipant(null)
-    }
   }
 
   const handlePageChange = (page: number) => {
@@ -135,27 +98,6 @@ export default function ParticipantsPage() {
     })
     if ((pagination.page || 1) !== 1) {
       setPagination((prev) => ({ ...prev, page: 1 }))
-    }
-  }
-
-  const confirmDelete = async () => {
-    if (!participantToDelete?.id) return
-
-    setDeleting(true)
-    setActionError(null)
-
-    try {
-      const service = new ParticipantService()
-      await service.delete(participantToDelete.id)
-      setIsDeleteDialogOpen(false)
-      setParticipantToDelete(null)
-      fetchParticipants()
-    } catch (error) {
-      setActionError(
-        error instanceof Error ? error.message : '삭제 중 오류가 발생했습니다'
-      )
-    } finally {
-      setDeleting(false)
     }
   }
 
@@ -239,10 +181,15 @@ export default function ParticipantsPage() {
   }
 
   return (
-    <ProtectedRoute allowedRoles={['admin']}>
+    <ProtectedRoute allowedRoles={['leader', 'admin']}>
       <div className="container mx-auto py-4 px-4 md:py-8">
         <div className="flex flex-col gap-4 mb-6 md:flex-row md:justify-between md:items-center">
-          <h1 className="text-2xl font-bold md:text-3xl">참여자 관리</h1>
+          <div>
+            <h1 className="text-2xl font-bold md:text-3xl">참여자 조회</h1>
+            <p className="text-sm text-stone-500 mt-2">
+              {user?.email ? `${user.email}님의 담당 모임` : '리더 대시보드'}
+            </p>
+          </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
@@ -270,10 +217,6 @@ export default function ParticipantsPage() {
               <span className="hidden sm:inline">전체 내보내기</span>
               <span className="sm:hidden">전체</span>
             </Button>
-            <Button onClick={handleAddClick} className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
-              참여자 추가
-            </Button>
           </div>
         </div>
 
@@ -299,19 +242,18 @@ export default function ParticipantsPage() {
                 <TableHead className="whitespace-nowrap">
                   {renderSortableHead('등록일', 'created_at')}
                 </TableHead>
-                <TableHead className="w-[140px] text-right">관리</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center">
+                  <TableCell colSpan={8} className="text-center">
                     로딩 중...
                   </TableCell>
                 </TableRow>
               ) : participants.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center">
+                  <TableCell colSpan={8} className="text-center">
                     참여자가 없습니다
                   </TableCell>
                 </TableRow>
@@ -329,26 +271,6 @@ export default function ParticipantsPage() {
                       {participant.created_at
                         ? new Date(participant.created_at).toLocaleDateString('ko-KR')
                         : '-'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditClick(participant)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                          수정
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDeleteClick(participant)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          삭제
-                        </Button>
-                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -405,49 +327,6 @@ export default function ParticipantsPage() {
             </div>
           </div>
         )}
-
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {selectedParticipant ? '참여자 수정' : '참여자 추가'}
-              </DialogTitle>
-            </DialogHeader>
-            <ParticipantForm
-              participant={selectedParticipant || undefined}
-              onSuccess={handleSuccess}
-              onCancel={() => handleDialogChange(false)}
-            />
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>참여자 삭제</DialogTitle>
-              <DialogDescription>삭제된 참여자는 복구할 수 없습니다.</DialogDescription>
-            </DialogHeader>
-            <p className="text-sm text-stone-700">
-              {participantToDelete?.name
-                ? `${participantToDelete.name} 참여자를 삭제하시겠습니까?`
-                : '선택된 참여자가 없습니다.'}
-            </p>
-            {actionError && (
-              <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {actionError}
-              </div>
-            )}
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-                취소
-              </Button>
-              <Button variant="destructive" onClick={confirmDelete} disabled={deleting}>
-                {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                삭제
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </ProtectedRoute>
   )

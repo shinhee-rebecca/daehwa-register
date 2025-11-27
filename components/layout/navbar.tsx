@@ -46,6 +46,13 @@ export function Navbar() {
               </Link>
             </div>
           )}
+          {role === 'leader' && (
+            <div className="flex items-center gap-2">
+              <Link href="/leader-dashboard">
+                <Button variant="ghost">참여자 조회</Button>
+              </Link>
+            </div>
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -47,7 +47,7 @@ Development roadmap for the Daehwastore Register application.
 - [x] Create main layout with navigation bar
 - [x] Build role-based navigation menu (admin vs leader views)
 - [x] Add user profile dropdown with logout
-- [ ] Implement responsive design for mobile/tablet
+- [x] Implement responsive design for mobile/tablet
 
 ### 2.2 Reusable Components (shadcn/ui)
 - [x] Add Table component for participant lists
@@ -59,7 +59,7 @@ Development roadmap for the Daehwastore Register application.
 - [x] Add Tabs component for organizing content
 - [x] Add Toast/Sonner for notifications
 - [ ] Add Search/Filter component (will implement with participant features)
-- [ ] Add Data export button (will implement with Excel export)
+- [x] Add Data export button (will implement with Excel export)
 
 ---
 
@@ -96,10 +96,10 @@ Development roadmap for the Daehwastore Register application.
 - [x] Add form validation for all fields (using Zod + react-hook-form)
 
 ### 3.4 Excel Export
-- [ ] Install Excel export library (e.g., xlsx or exceljs)
-- [ ] Implement "Export Current Page" functionality
-- [ ] Implement "Export All Results" functionality
-- [ ] Format Excel with proper headers and styling
+- [x] Install Excel export library (e.g., xlsx or exceljs)
+- [x] Implement "Export Current Page" functionality
+- [x] Implement "Export All Results" functionality
+- [x] Format Excel with proper headers and styling
 
 ---
 
@@ -128,11 +128,11 @@ Development roadmap for the Daehwastore Register application.
 ## Phase 5: Leader View Features
 
 ### 5.1 Leader Dashboard
-- [ ] Create leader-specific dashboard
-- [ ] Display only participants in assigned meetings
-- [ ] Show read-only participant information
-- [ ] Implement same search/filter as admin (scoped to assigned meetings)
-- [ ] Add pagination for leader view
+- [x] Create leader-specific dashboard
+- [ ] Display only participants in assigned meetings (TODO: needs meeting assignment implementation)
+- [x] Show read-only participant information
+- [x] Implement same search/filter as admin (scoped to assigned meetings)
+- [x] Add pagination for leader view
 
 ---
 

@@ -99,15 +99,15 @@ export default function LeadersPage() {
 
   return (
     <ProtectedRoute allowedRoles={['admin']}>
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-between mb-6">
+      <div className="container mx-auto py-4 px-4 md:py-8">
+        <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold">리더 관리</h1>
+            <h1 className="text-2xl font-bold md:text-3xl">리더 관리</h1>
             <p className="text-sm text-stone-500">
               Google 이메일을 등록하면 리더가 로그인할 수 있습니다.
             </p>
           </div>
-          <Button onClick={handleAddClick}>
+          <Button onClick={handleAddClick} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             리더 추가
           </Button>
@@ -119,7 +119,7 @@ export default function LeadersPage() {
           </div>
         )}
 
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

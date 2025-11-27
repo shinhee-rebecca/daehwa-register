@@ -219,4 +219,67 @@ export class ParticipantService {
       totalPages: Math.ceil((count || 0) / limit),
     }
   }
+
+  /**
+   * 필터 조건에 맞는 모든 참여자 조회 (페이지네이션 없음)
+   * Excel 내보내기 등에서 사용
+   */
+  async searchAll(
+    filters: ParticipantFilters,
+    sort?: SortParams
+  ): Promise<Participant[]> {
+    const sortColumn = sort?.column || 'created_at'
+    const isAscending = (sort?.direction || 'desc') === 'asc'
+
+    let query = supabase.from(this.TABLE_NAME).select('*')
+
+    // Apply filters
+    if (filters.gender) {
+      query = query.eq('gender', filters.gender)
+    }
+    if (filters.age_min !== undefined) {
+      query = query.gte('age', filters.age_min)
+    }
+    if (filters.age_max !== undefined) {
+      query = query.lte('age', filters.age_max)
+    }
+    if (filters.name) {
+      query = query.ilike('name', `%${filters.name}%`)
+    }
+    if (filters.months_min !== undefined) {
+      query = query.gte('months', filters.months_min)
+    }
+    if (filters.months_max !== undefined) {
+      query = query.lte('months', filters.months_max)
+    }
+    if (filters.first_registration_month) {
+      query = query.eq('first_registration_month', filters.first_registration_month)
+    }
+    if (filters.phone) {
+      query = query.ilike('phone', `%${filters.phone}%`)
+    }
+    if (filters.fee_min !== undefined) {
+      query = query.gte('fee', filters.fee_min)
+    }
+    if (filters.fee_max !== undefined) {
+      query = query.lte('fee', filters.fee_max)
+    }
+    if (filters.re_registration !== undefined) {
+      query = query.eq('re_registration', filters.re_registration)
+    }
+    if (filters.latest_registration) {
+      query = query.eq('latest_registration', filters.latest_registration)
+    }
+    if (filters.current_meeting_id) {
+      query = query.eq('current_meeting_id', filters.current_meeting_id)
+    }
+
+    const { data, error } = await query.order(sortColumn, { ascending: isAscending })
+
+    if (error) {
+      throw new Error(`참여자 전체 검색 실패: ${error.message}`)
+    }
+
+    return data.map((item) => participantSchema.parse(item))
+  }
 }

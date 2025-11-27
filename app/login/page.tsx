@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AuthService } from '@/lib/services/auth'
 import { Button } from '@/components/ui/button'
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const authService = new AuthService()
@@ -97,5 +97,29 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-stone-50">
+          <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-stone-900">대화상점 인명부</h1>
+              <p className="mt-2 text-sm text-stone-600">
+                독서모임 참여자 관리 시스템
+              </p>
+            </div>
+            <div className="mt-8 text-center text-sm text-stone-500">
+              로그인 정보를 불러오는 중...
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   )
 }

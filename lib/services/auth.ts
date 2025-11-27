@@ -6,11 +6,14 @@ export class AuthService {
   /**
    * Sign in with Google OAuth
    */
-  async signInWithGoogle(redirectPath = '/participants') {
+  async signInWithGoogle(redirectPath = '/participants', forceSelectAccount = false) {
+    const queryParams = forceSelectAccount ? { prompt: 'select_account' } : undefined
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`,
+        queryParams,
       },
     })
 
@@ -25,11 +28,34 @@ export class AuthService {
    * Sign out current user
    */
   async signOut() {
+    const clearLocalSession = async () => {
+      const { error: localError } = await supabase.auth.signOut({ scope: 'local' })
+      if (localError) {
+        console.warn('Local signOut failed:', localError)
+      }
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession()
+
+    // 이미 세션이 없는 경우 조용히 통과
+    if (!sessionData.session) {
+      await clearLocalSession()
+      return
+    }
+
     const { error } = await supabase.auth.signOut()
 
     if (error) {
-      throw new Error(`로그아웃 실패: ${error.message}`)
+      // Supabase가 세션이 없다고 응답하는 경우는 무시하고 나머지만 에러 처리
+      const message = error.message || ''
+      if (!message.toLowerCase().includes('auth session missing')) {
+        throw new Error(`로그아웃 실패: ${message}`)
+      }
+      await clearLocalSession()
     }
+
+    // 네트워크 오류 없이 signOut 되었다면 로컬 세션도 확실히 제거
+    await clearLocalSession()
   }
 
   /**

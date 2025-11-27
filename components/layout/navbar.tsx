@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Users, UserCircle, LogOut } from 'lucide-react'
+import { Users, UserCircle, LogOut, RefreshCw } from 'lucide-react'
 
 export function Navbar() {
   const [user] = useAtom(userAtom)
@@ -23,6 +23,25 @@ export function Navbar() {
   const handleSignOut = async () => {
     await authService.signOut()
     window.location.href = '/login'
+  }
+
+  const handleSwitchAccount = async () => {
+    try {
+      await authService.signOut()
+    } catch (error) {
+      console.error('Failed to sign out before switching account:', error)
+    }
+
+    const redirectPath =
+      typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}` || '/'
+        : '/'
+
+    try {
+      await authService.signInWithGoogle(redirectPath, true)
+    } catch (error) {
+      console.error('Failed to start Google login for account switch:', error)
+    }
   }
 
   if (!user) return null
@@ -76,6 +95,10 @@ export function Navbar() {
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>로그아웃</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSwitchAccount}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                <span>다른 계정으로 로그인</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

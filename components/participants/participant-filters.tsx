@@ -49,7 +49,7 @@ interface FilterState {
 }
 
 const AGE_LIMITS: RangeLimits = { min: 15, max: 55 }
-const FEE_LIMITS: RangeLimits = { min: 0, max: 200_000 }
+const FEE_LIMITS: RangeLimits = { min: -100_000, max: 200_000 }
 const MONTHS_LIMITS: RangeLimits = { min: 0, max: 50 }
 
 const formatNumber = (value: number) => value.toLocaleString()

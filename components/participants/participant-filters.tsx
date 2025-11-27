@@ -8,6 +8,8 @@ import {
   resetFiltersAtom,
 } from '@/lib/store/participant'
 import { MeetingService, type MeetingOption } from '@/lib/services/meeting'
+import type { ParticipantFilters } from '@/lib/services/participant'
+import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,10 +21,112 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Slider } from '@/components/ui/slider'
 import { Search, X } from 'lucide-react'
 
 interface ParticipantFiltersProps {
   onSearch?: () => void
+}
+
+type GenderFilter = 'all' | 'male' | 'female'
+type RangeValue = [number, number]
+
+interface RangeLimits {
+  min: number
+  max: number
+}
+
+interface FilterState {
+  name: string
+  phone: string
+  ageRange: RangeValue
+  feeRange: RangeValue
+  monthsRange: RangeValue
+  first_registration_month: string
+  latest_registration: string
+  gender: GenderFilter
+  current_meeting_id: string
+}
+
+const AGE_LIMITS: RangeLimits = { min: 15, max: 55 }
+const FEE_LIMITS: RangeLimits = { min: 0, max: 200_000 }
+const MONTHS_LIMITS: RangeLimits = { min: 0, max: 50 }
+
+const formatNumber = (value: number) => value.toLocaleString()
+
+const clampRange = (value: number[], limits: RangeLimits): RangeValue => {
+  const [start = limits.min, end = limits.max] = value
+  const clampedStart = Math.min(Math.max(start, limits.min), limits.max)
+  const clampedEnd = Math.min(Math.max(end, clampedStart), limits.max)
+  return [clampedStart, clampedEnd]
+}
+
+const isFullRange = (value: RangeValue, limits: RangeLimits) =>
+  value[0] === limits.min && value[1] === limits.max
+
+const buildLocalFilters = (filters: ParticipantFilters): FilterState => ({
+  name: filters.name || '',
+  phone: filters.phone || '',
+  ageRange: [
+    filters.age_min ?? AGE_LIMITS.min,
+    filters.age_max ?? AGE_LIMITS.max,
+  ],
+  feeRange: [
+    filters.fee_min ?? FEE_LIMITS.min,
+    filters.fee_max ?? FEE_LIMITS.max,
+  ],
+  monthsRange: [
+    filters.months_min ?? MONTHS_LIMITS.min,
+    filters.months_max ?? MONTHS_LIMITS.max,
+  ],
+  first_registration_month: filters.first_registration_month || '',
+  latest_registration: filters.latest_registration || '',
+  gender: filters.gender ?? 'all',
+  current_meeting_id: filters.current_meeting_id || 'all',
+})
+
+interface RangeFieldProps {
+  label: string
+  limits: RangeLimits
+  value: RangeValue
+  onChange: (value: RangeValue) => void
+  step?: number
+  formatter?: (value: number) => string
+  className?: string
+}
+
+function RangeField({
+  label,
+  limits,
+  value,
+  onChange,
+  step = 1,
+  formatter = formatNumber,
+  className,
+}: RangeFieldProps) {
+  return (
+    <div className={cn('space-y-3 md:col-span-2', className)}>
+      <div className="flex items-center justify-between text-sm">
+        <Label>{label}</Label>
+        <span className="text-xs text-muted-foreground">
+          {formatter(value[0])} ~ {formatter(value[1])}
+        </span>
+      </div>
+      <div className="space-y-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-3">
+        <Slider
+          value={value}
+          min={limits.min}
+          max={limits.max}
+          step={step}
+          onValueChange={(next) => onChange(clampRange(next, limits))}
+        />
+        <div className="flex justify-between text-[11px] text-muted-foreground">
+          <span>{formatter(limits.min)}</span>
+          <span>{formatter(limits.max)}</span>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
@@ -33,56 +137,42 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
   const [meetingsLoading, setMeetingsLoading] = useState(false)
   const [meetingsError, setMeetingsError] = useState<string | null>(null)
 
-  const [localFilters, setLocalFilters] = useState({
-    name: filters.name || '',
-    phone: filters.phone || '',
-    age_min: filters.age_min?.toString() || '',
-    age_max: filters.age_max?.toString() || '',
-    fee_min: filters.fee_min?.toString() || '',
-    fee_max: filters.fee_max?.toString() || '',
-    months_min: filters.months_min?.toString() || '',
-    months_max: filters.months_max?.toString() || '',
-    first_registration_month: filters.first_registration_month || '',
-    latest_registration: filters.latest_registration || '',
-    gender: filters.gender || 'all',
-    current_meeting_id: filters.current_meeting_id || 'all',
-    re_registration:
-      filters.re_registration === undefined
-        ? 'all'
-        : filters.re_registration
-          ? 'true'
-          : 'false',
-  })
+  const [localFilters, setLocalFilters] = useState<FilterState>(() =>
+    buildLocalFilters(filters)
+  )
 
-  const parseNumber = (value: string) => {
-    const numValue = parseInt(value, 10)
-    return Number.isNaN(numValue) ? undefined : numValue
+  const buildFilters = (): ParticipantFilters => {
+    const nextFilters: ParticipantFilters = {
+      name: localFilters.name || undefined,
+      phone: localFilters.phone || undefined,
+      first_registration_month:
+        localFilters.first_registration_month || undefined,
+      latest_registration: localFilters.latest_registration || undefined,
+      gender:
+        localFilters.gender === 'all'
+          ? undefined
+          : (localFilters.gender as 'male' | 'female'),
+      current_meeting_id:
+        localFilters.current_meeting_id === 'all'
+          ? undefined
+          : localFilters.current_meeting_id,
+    }
+
+    if (!isFullRange(localFilters.ageRange, AGE_LIMITS)) {
+      nextFilters.age_min = localFilters.ageRange[0]
+      nextFilters.age_max = localFilters.ageRange[1]
+    }
+    if (!isFullRange(localFilters.feeRange, FEE_LIMITS)) {
+      nextFilters.fee_min = localFilters.feeRange[0]
+      nextFilters.fee_max = localFilters.feeRange[1]
+    }
+    if (!isFullRange(localFilters.monthsRange, MONTHS_LIMITS)) {
+      nextFilters.months_min = localFilters.monthsRange[0]
+      nextFilters.months_max = localFilters.monthsRange[1]
+    }
+
+    return nextFilters
   }
-
-  const buildFilters = () => ({
-    name: localFilters.name || undefined,
-    phone: localFilters.phone || undefined,
-    age_min: parseNumber(localFilters.age_min),
-    age_max: parseNumber(localFilters.age_max),
-    fee_min: parseNumber(localFilters.fee_min),
-    fee_max: parseNumber(localFilters.fee_max),
-    months_min: parseNumber(localFilters.months_min),
-    months_max: parseNumber(localFilters.months_max),
-    first_registration_month: localFilters.first_registration_month || undefined,
-    latest_registration: localFilters.latest_registration || undefined,
-    gender:
-      localFilters.gender === 'all'
-        ? undefined
-        : (localFilters.gender as 'male' | 'female'),
-    current_meeting_id:
-      localFilters.current_meeting_id === 'all'
-        ? undefined
-        : localFilters.current_meeting_id,
-    re_registration:
-      localFilters.re_registration === 'all'
-        ? undefined
-        : localFilters.re_registration === 'true',
-  })
 
   const handleNameChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, name: value }))
@@ -92,36 +182,12 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
     setLocalFilters((prev) => ({ ...prev, phone: value }))
   }
 
-  const handleGenderChange = (value: string) => {
+  const handleGenderChange = (value: GenderFilter) => {
     setLocalFilters((prev) => ({ ...prev, gender: value }))
   }
 
   const handleCurrentMeetingChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, current_meeting_id: value }))
-  }
-
-  const handleAgeMinChange = (value: string) => {
-    setLocalFilters((prev) => ({ ...prev, age_min: value }))
-  }
-
-  const handleAgeMaxChange = (value: string) => {
-    setLocalFilters((prev) => ({ ...prev, age_max: value }))
-  }
-
-  const handleFeeMinChange = (value: string) => {
-    setLocalFilters((prev) => ({ ...prev, fee_min: value }))
-  }
-
-  const handleFeeMaxChange = (value: string) => {
-    setLocalFilters((prev) => ({ ...prev, fee_max: value }))
-  }
-
-  const handleMonthsMinChange = (value: string) => {
-    setLocalFilters((prev) => ({ ...prev, months_min: value }))
-  }
-
-  const handleMonthsMaxChange = (value: string) => {
-    setLocalFilters((prev) => ({ ...prev, months_max: value }))
   }
 
   const handleFirstRegistrationMonthChange = (value: string) => {
@@ -132,8 +198,25 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
     setLocalFilters((prev) => ({ ...prev, latest_registration: value }))
   }
 
-  const handleReRegistrationChange = (value: string) => {
-    setLocalFilters((prev) => ({ ...prev, re_registration: value }))
+  const handleAgeRangeChange = (value: number[]) => {
+    setLocalFilters((prev) => ({
+      ...prev,
+      ageRange: clampRange(value, AGE_LIMITS),
+    }))
+  }
+
+  const handleFeeRangeChange = (value: number[]) => {
+    setLocalFilters((prev) => ({
+      ...prev,
+      feeRange: clampRange(value, FEE_LIMITS),
+    }))
+  }
+
+  const handleMonthsRangeChange = (value: number[]) => {
+    setLocalFilters((prev) => ({
+      ...prev,
+      monthsRange: clampRange(value, MONTHS_LIMITS),
+    }))
   }
 
   const handleSearch = () => {
@@ -144,21 +227,7 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
   }
 
   const handleReset = () => {
-    setLocalFilters({
-      name: '',
-      phone: '',
-      age_min: '',
-      age_max: '',
-      fee_min: '',
-      fee_max: '',
-      months_min: '',
-      months_max: '',
-      first_registration_month: '',
-      latest_registration: '',
-      gender: 'all',
-      current_meeting_id: 'all',
-      re_registration: 'all',
-    })
+    setLocalFilters(buildLocalFilters({}))
     resetFilters()
     setPagination((prev) => ({ ...prev, page: 1 }))
     onSearch?.()
@@ -194,7 +263,7 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Name Search */}
-          <div className="space-y-2">
+          <div className="space-y-2 max-w-[6rem]">
             <Label htmlFor="name">이름</Label>
             <Input
               id="name"
@@ -206,20 +275,28 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
 
           {/* Gender Filter */}
           <div className="space-y-2">
-            <Label htmlFor="gender">성별</Label>
-            <Select
-              value={localFilters.gender}
-              onValueChange={handleGenderChange}
-            >
-              <SelectTrigger id="gender">
-                <SelectValue placeholder="전체" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="male">남성</SelectItem>
-                <SelectItem value="female">여성</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>성별</Label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'all', label: '전체' },
+                { value: 'male', label: '남성' },
+                { value: 'female', label: '여성' },
+              ].map((option) => (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant={
+                    localFilters.gender === option.value ? 'default' : 'outline'
+                  }
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() => handleGenderChange(option.value as GenderFilter)}
+                  aria-pressed={localFilters.gender === option.value}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
           </div>
 
           {/* Current Meeting */}
@@ -248,7 +325,7 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
           </div>
 
           {/* Phone Search */}
-          <div className="space-y-2">
+          <div className="space-y-2 max-w-[12rem]">
             <Label htmlFor="phone">전화번호</Label>
             <Input
               id="phone"
@@ -259,64 +336,36 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
           </div>
 
           {/* Age Range */}
-          <div className="space-y-2">
-            <Label>나이 범위</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="최소"
-                value={localFilters.age_min}
-                onChange={(e) => handleAgeMinChange(e.target.value)}
-              />
-              <Input
-                type="number"
-                placeholder="최대"
-                value={localFilters.age_max}
-                onChange={(e) => handleAgeMaxChange(e.target.value)}
-              />
-            </div>
-          </div>
+          <RangeField
+            label="나이 범위"
+            limits={AGE_LIMITS}
+            value={localFilters.ageRange}
+            onChange={handleAgeRangeChange}
+            className="lg:col-span-2"
+          />
 
           {/* Fee Range */}
-          <div className="space-y-2">
-            <Label>회비 범위</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="최소"
-                value={localFilters.fee_min}
-                onChange={(e) => handleFeeMinChange(e.target.value)}
-              />
-              <Input
-                type="number"
-                placeholder="최대"
-                value={localFilters.fee_max}
-                onChange={(e) => handleFeeMaxChange(e.target.value)}
-              />
-            </div>
-          </div>
+          <RangeField
+            label="회비 범위"
+            limits={FEE_LIMITS}
+            value={localFilters.feeRange}
+            onChange={handleFeeRangeChange}
+            step={1000}
+            formatter={(value) => `${formatNumber(value)}원`}
+            className="lg:col-span-2"
+          />
 
           {/* Months Range */}
-          <div className="space-y-2">
-            <Label>개월수 범위</Label>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="최소"
-                value={localFilters.months_min}
-                onChange={(e) => handleMonthsMinChange(e.target.value)}
-              />
-              <Input
-                type="number"
-                placeholder="최대"
-                value={localFilters.months_max}
-                onChange={(e) => handleMonthsMaxChange(e.target.value)}
-              />
-            </div>
-          </div>
+          <RangeField
+            label="개월수 범위"
+            limits={MONTHS_LIMITS}
+            value={localFilters.monthsRange}
+            onChange={handleMonthsRangeChange}
+            className="lg:col-span-2"
+          />
 
           {/* First Registration Month */}
-          <div className="space-y-2">
+          <div className="space-y-2 max-w-[10rem]">
             <Label htmlFor="first_registration_month">첫 등록월</Label>
             <Input
               id="first_registration_month"
@@ -327,7 +376,7 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
           </div>
 
           {/* Latest Registration */}
-          <div className="space-y-2">
+          <div className="space-y-2 max-w-[10rem]">
             <Label htmlFor="latest_registration">최근 등록월</Label>
             <Input
               id="latest_registration"
@@ -335,24 +384,6 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
               value={localFilters.latest_registration}
               onChange={(e) => handleLatestRegistrationChange(e.target.value)}
             />
-          </div>
-
-          {/* Re-registration Filter */}
-          <div className="space-y-2">
-            <Label htmlFor="re_registration">재등록 여부</Label>
-            <Select
-              value={localFilters.re_registration}
-              onValueChange={handleReRegistrationChange}
-            >
-              <SelectTrigger id="re_registration">
-                <SelectValue placeholder="전체" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체</SelectItem>
-                <SelectItem value="true">재등록</SelectItem>
-                <SelectItem value="false">신규</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
 

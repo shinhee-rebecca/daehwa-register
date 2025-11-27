@@ -48,7 +48,7 @@ describe('ParticipantFilters', () => {
     expect(mockOnSearch).toHaveBeenCalled()
   })
 
-  it('should have age range inputs', () => {
+  it('should render slider controls for ranges', () => {
     render(
       <Provider>
         <ParticipantFilters />
@@ -56,18 +56,20 @@ describe('ParticipantFilters', () => {
     )
 
     expect(screen.getByText('나이 범위')).toBeDefined()
-    const minMaxInputs = screen.getAllByPlaceholderText(/최소|최대/)
-    expect(minMaxInputs.length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByText('회비 범위')).toBeDefined()
+    expect(screen.getByText('개월수 범위')).toBeDefined()
+
+    const sliders = screen.getAllByRole('slider')
+    expect(sliders.length).toBeGreaterThanOrEqual(6)
   })
 
-  it('should have fee range inputs', () => {
+  it('should not show re-registration filter', () => {
     render(
       <Provider>
         <ParticipantFilters />
       </Provider>
     )
 
-    const feeInputs = screen.getAllByPlaceholderText(/최소|최대/)
-    expect(feeInputs.length).toBeGreaterThanOrEqual(4) // age min/max + fee min/max
+    expect(screen.queryByText('재등록 여부')).toBeNull()
   })
 })

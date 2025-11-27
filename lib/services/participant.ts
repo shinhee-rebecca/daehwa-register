@@ -22,6 +22,7 @@ export interface ParticipantFilters {
   re_registration?: boolean
   latest_registration?: string
   current_meeting_id?: string
+  participation_month?: string
 }
 
 export interface PaginationParams {
@@ -200,6 +201,9 @@ export class ParticipantService {
     if (filters.current_meeting_id) {
       query = query.eq('current_meeting_id', filters.current_meeting_id)
     }
+    if (filters.participation_month) {
+      query = query.eq('participation_month', filters.participation_month)
+    }
 
     const { data, error, count } = await query
       .order(sortColumn, { ascending: isAscending })
@@ -272,6 +276,9 @@ export class ParticipantService {
     }
     if (filters.current_meeting_id) {
       query = query.eq('current_meeting_id', filters.current_meeting_id)
+    }
+    if (filters.participation_month) {
+      query = query.eq('participation_month', filters.participation_month)
     }
 
     const { data, error } = await query.order(sortColumn, { ascending: isAscending })

@@ -321,6 +321,7 @@ export default function ParticipantsPage() {
                   {renderSortableHead('개월수', 'months')}
                 </TableHead>
                 <TableHead>{renderSortableHead('회비', 'fee')}</TableHead>
+                <TableHead>참여월</TableHead>
                 <TableHead>참여 모임</TableHead>
                 <TableHead>비고</TableHead>
                 <TableHead className="whitespace-nowrap">
@@ -332,13 +333,13 @@ export default function ParticipantsPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center">
+                  <TableCell colSpan={11} className="text-center">
                     로딩 중...
                   </TableCell>
                 </TableRow>
               ) : participants.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center">
+                  <TableCell colSpan={11} className="text-center">
                     참여자가 없습니다
                   </TableCell>
                 </TableRow>
@@ -351,6 +352,7 @@ export default function ParticipantsPage() {
                     <TableCell>{participant.phone}</TableCell>
                     <TableCell>{participant.months}개월</TableCell>
                     <TableCell>{participant.fee.toLocaleString()}원</TableCell>
+                    <TableCell>{participant.participation_month || '-'}</TableCell>
                     <TableCell>{getMeetingName(participant.current_meeting_id)}</TableCell>
                     <TableCell>{participant.notes || '-'}</TableCell>
                     <TableCell>

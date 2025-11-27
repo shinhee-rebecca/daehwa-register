@@ -117,6 +117,7 @@ export type Database = {
           months: number
           name: string
           notes: string | null
+          participation_month: string | null
           past_meetings: string[] | null
           phone: string
           re_registration: boolean
@@ -134,6 +135,7 @@ export type Database = {
           months?: number
           name: string
           notes?: string | null
+          participation_month?: string | null
           past_meetings?: string[] | null
           phone: string
           re_registration?: boolean
@@ -151,6 +153,7 @@ export type Database = {
           months?: number
           name?: string
           notes?: string | null
+          participation_month?: string | null
           past_meetings?: string[] | null
           phone?: string
           re_registration?: boolean

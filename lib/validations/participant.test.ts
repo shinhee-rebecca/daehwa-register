@@ -108,10 +108,55 @@ describe('Participant Validation', () => {
         current_meeting_id: null,
         notes: null,
         past_meetings: [],
+        participation_month: null,
       }
 
       const result = participantSchema.safeParse(participantWithNulls)
       expect(result.success).toBe(true)
+    })
+
+    it('should validate participation_month in YYMM format', () => {
+      const validFormats = ['2411', '2506', '1708', '3012']
+
+      validFormats.forEach((format) => {
+        const participant = {
+          gender: 'male',
+          age: 30,
+          name: '홍길동',
+          months: 12,
+          first_registration_month: '2024-01',
+          phone: '010-1234-5678',
+          fee: 50000,
+          re_registration: false,
+          latest_registration: '2024-11',
+          participation_month: format,
+        }
+
+        const result = participantSchema.safeParse(participant)
+        expect(result.success).toBe(true)
+      })
+    })
+
+    it('should reject invalid participation_month format', () => {
+      const invalidFormats = ['241', '24111', 'abcd', '24-11', '2024-11']
+
+      invalidFormats.forEach((format) => {
+        const participant = {
+          gender: 'male',
+          age: 30,
+          name: '홍길동',
+          months: 12,
+          first_registration_month: '2024-01',
+          phone: '010-1234-5678',
+          fee: 50000,
+          re_registration: false,
+          latest_registration: '2024-11',
+          participation_month: format,
+        }
+
+        const result = participantSchema.safeParse(participant)
+        expect(result.success).toBe(false)
+      })
     })
   })
 

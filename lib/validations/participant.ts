@@ -3,6 +3,9 @@ import { z } from 'zod'
 // 한국 전화번호 형식 검증 (010-XXXX-XXXX 또는 010XXXXXXXX)
 const phoneRegex = /^01[0-9]-?\d{3,4}-?\d{4}$/
 
+// 참여월 형식 검증 (YYMM: 2411, 2506 등)
+const participationMonthRegex = /^\d{4}$/
+
 export const participantSchema = z.object({
   id: z.string().uuid().optional(),
   gender: z.enum(['male', 'female']),
@@ -17,6 +20,7 @@ export const participantSchema = z.object({
   current_meeting_id: z.string().uuid().nullable().optional(),
   notes: z.string().nullable().optional(),
   past_meetings: z.array(z.string()).default([]),
+  participation_month: z.string().regex(participationMonthRegex, '올바른 형식이 아닙니다 (YYMM)').nullable().optional(),
   created_at: z.string().datetime({ offset: true }).optional(),
   updated_at: z.string().datetime({ offset: true }).optional(),
 })

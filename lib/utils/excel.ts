@@ -18,6 +18,7 @@ const PARTICIPANT_HEADERS: Record<string, string> = {
   fee: '회비',
   re_registration: '재등록',
   latest_registration: '최근 등록',
+  participation_month: '참여월',
   current_meeting_id: '참여 모임',
   notes: '비고',
   created_at: '등록일',
@@ -41,6 +42,7 @@ function participantToExcelRow(
     [PARTICIPANT_HEADERS.fee]: participant.fee,
     [PARTICIPANT_HEADERS.re_registration]: participant.re_registration ? '예' : '아니오',
     [PARTICIPANT_HEADERS.latest_registration]: participant.latest_registration || '',
+    [PARTICIPANT_HEADERS.participation_month]: participant.participation_month || '',
     [PARTICIPANT_HEADERS.current_meeting_id]:
       (meetingNameResolver?.(participant.current_meeting_id) ??
         participant.current_meeting_id) || '',

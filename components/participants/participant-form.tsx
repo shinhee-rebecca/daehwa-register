@@ -61,6 +61,7 @@ export function ParticipantForm({
           current_meeting_id: participant.current_meeting_id,
           notes: participant.notes || undefined,
           past_meetings: participant.past_meetings,
+          participation_month: participant.participation_month || undefined,
         }
       : {
           gender: 'male',
@@ -75,6 +76,7 @@ export function ParticipantForm({
           current_meeting_id: null,
           notes: undefined,
           past_meetings: [],
+          participation_month: undefined,
         },
   })
 
@@ -214,6 +216,22 @@ export function ParticipantForm({
           {errors.latest_registration && (
             <p className="text-sm text-red-600">
               {String(errors.latest_registration.message)}
+            </p>
+          )}
+        </div>
+
+        {/* Participation Month */}
+        <div className="space-y-2">
+          <Label htmlFor="participation_month">참여월 (YYMM)</Label>
+          <Input
+            id="participation_month"
+            placeholder="예: 2411, 2506"
+            maxLength={4}
+            {...register('participation_month')}
+          />
+          {errors.participation_month && (
+            <p className="text-sm text-red-600">
+              {String(errors.participation_month.message)}
             </p>
           )}
         </div>

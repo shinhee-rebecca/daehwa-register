@@ -46,6 +46,7 @@ interface FilterState {
   latest_registration: string
   gender: GenderFilter
   current_meeting_id: string
+  participation_month: string
 }
 
 const AGE_LIMITS: RangeLimits = { min: 15, max: 55 }
@@ -83,6 +84,7 @@ const buildLocalFilters = (filters: ParticipantFilters): FilterState => ({
   latest_registration: filters.latest_registration || '',
   gender: filters.gender ?? 'all',
   current_meeting_id: filters.current_meeting_id || 'all',
+  participation_month: filters.participation_month || '',
 })
 
 interface RangeFieldProps {
@@ -156,6 +158,7 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
         localFilters.current_meeting_id === 'all'
           ? undefined
           : localFilters.current_meeting_id,
+      participation_month: localFilters.participation_month || undefined,
     }
 
     if (!isFullRange(localFilters.ageRange, AGE_LIMITS)) {
@@ -196,6 +199,10 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
 
   const handleLatestRegistrationChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, latest_registration: value }))
+  }
+
+  const handleParticipationMonthChange = (value: string) => {
+    setLocalFilters((prev) => ({ ...prev, participation_month: value }))
   }
 
   const handleAgeRangeChange = (value: number[]) => {
@@ -383,6 +390,18 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
               type="month"
               value={localFilters.latest_registration}
               onChange={(e) => handleLatestRegistrationChange(e.target.value)}
+            />
+          </div>
+
+          {/* Participation Month */}
+          <div className="space-y-2">
+            <Label htmlFor="participation_month">참여월 (YYMM)</Label>
+            <Input
+              id="participation_month"
+              placeholder="예: 2411, 2506"
+              maxLength={4}
+              value={localFilters.participation_month}
+              onChange={(e) => handleParticipationMonthChange(e.target.value)}
             />
           </div>
         </div>

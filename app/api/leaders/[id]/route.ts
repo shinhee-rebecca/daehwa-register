@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin-client'
 import { updateLeaderSchema } from '@/lib/validations/leader'
 
@@ -53,10 +54,11 @@ async function ensureAuthUser(email?: string) {
 }
 
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const json = await request.json()
     const validated = updateLeaderSchema.parse(json)
     const normalizedEmail = validated.google_email
@@ -73,7 +75,7 @@ export async function PATCH(
         ...validated,
         ...(normalizedEmail ? { google_email: normalizedEmail } : {}),
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .select(
         'id, gender, name, phone, google_email, assigned_meeting_id, created_at, updated_at, meetings:assigned_meeting_id(name)'
       )
@@ -98,10 +100,11 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { error } = await supabaseAdmin.from('leaders').delete().eq('id', params.id)
+  const { id } = await params
+  const { error } = await supabaseAdmin.from('leaders').delete().eq('id', id)
 
   if (error) {
     console.error('Failed to delete leader', error)

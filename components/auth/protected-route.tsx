@@ -3,7 +3,6 @@
 import { useEffect, useMemo } from 'react'
 import { useAtom } from 'jotai'
 import { usePathname, useRouter } from 'next/navigation'
-import { AuthService } from '@/lib/services/auth'
 import { authInitializedAtom, userAtom } from '@/lib/store/auth'
 
 interface ProtectedRouteProps {

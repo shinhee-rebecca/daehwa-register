@@ -4,7 +4,6 @@ import {
   leaderSchema,
   updateLeaderSchema,
   type CreateLeader,
-  type Leader,
   type UpdateLeader,
 } from '../validations/leader'
 

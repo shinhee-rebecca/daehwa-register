@@ -104,18 +104,23 @@ export class AuthService {
 
     const payload = await response.json().catch(() => ({}))
 
+    console.log('fetchUserRole response:', { status: response.ok, payload })
+
     if (!response.ok) {
       const message =
         typeof payload?.error === 'string'
           ? payload.error
           : '역할 확인에 실패했습니다.'
+      console.error('fetchUserRole error:', message)
       throw new Error(message)
     }
 
     if (!payload?.role) {
+      console.error('fetchUserRole: no role in payload')
       throw new Error('역할 정보를 찾을 수 없습니다.')
     }
 
+    console.log('fetchUserRole success:', payload.role)
     return payload.role as UserRole
   }
 }

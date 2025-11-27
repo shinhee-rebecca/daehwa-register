@@ -21,6 +21,11 @@ export function ProtectedRoute({
   const router = useRouter()
   const pathname = usePathname()
 
+  const roleHome = useMemo(() => {
+    if (!user) return null
+    return user.role === 'admin' ? '/participants' : '/leader-dashboard'
+  }, [user])
+
   const isAllowed = useMemo(() => {
     if (!user) return false
     if (!allowedRoles || allowedRoles.length === 0) return true
@@ -38,11 +43,15 @@ export function ProtectedRoute({
     }
 
     if (!isAllowed) {
-      const url = new URL('/login', window.location.origin)
-      url.searchParams.set('error', 'unauthorized')
-      router.replace(url.toString())
+      if (roleHome) {
+        router.replace(roleHome)
+      } else {
+        const url = new URL('/login', window.location.origin)
+        url.searchParams.set('error', 'unauthorized')
+        router.replace(url.toString())
+      }
     }
-  }, [initialized, isAllowed, pathname, redirectTo, router, user])
+  }, [initialized, isAllowed, pathname, redirectTo, roleHome, router, user])
 
   if (!initialized) {
     return (

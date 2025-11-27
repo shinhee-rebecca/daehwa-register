@@ -4,14 +4,33 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AuthService } from '@/lib/services/auth'
 import { Button } from '@/components/ui/button'
+import { useAtom } from 'jotai'
+import { authInitializedAtom, userAtom } from '@/lib/store/auth'
+import { useRouter } from 'next/navigation'
 
 function LoginPageContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [user] = useAtom(userAtom)
+  const [initialized] = useAtom(authInitializedAtom)
   const authService = new AuthService()
   const searchParams = useSearchParams()
+  const router = useRouter()
   const errorParam = searchParams.get('error')
   const redirectParam = searchParams.get('redirect')
+
+  useEffect(() => {
+    if (!initialized || !user) return
+
+    const target =
+      redirectParam && redirectParam.startsWith('/')
+        ? redirectParam
+        : user.role === 'admin'
+          ? '/participants'
+          : '/leader-dashboard'
+
+    router.replace(target)
+  }, [initialized, redirectParam, router, user])
 
   useEffect(() => {
     if (!errorParam) {

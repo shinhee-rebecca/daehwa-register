@@ -224,7 +224,7 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
 
           {/* Current Meeting */}
           <div className="space-y-2">
-            <Label htmlFor="current_meeting_id">현재 모임</Label>
+            <Label htmlFor="current_meeting_id">참여 모임</Label>
             <Select
               value={localFilters.current_meeting_id}
               onValueChange={handleCurrentMeetingChange}

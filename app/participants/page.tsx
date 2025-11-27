@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAtom } from 'jotai'
 import {
   ParticipantService,
@@ -64,7 +64,6 @@ export default function ParticipantsPage() {
   const [exporting, setExporting] = useState(false)
   const [meetingOptions, setMeetingOptions] = useState<MeetingOption[]>([])
   const [meetingsLoading, setMeetingsLoading] = useState(true)
-  const [expandedPastMeetings, setExpandedPastMeetings] = useState<Record<string, boolean>>({})
 
   const fetchParticipants = async () => {
     setLoading(true)
@@ -89,18 +88,6 @@ export default function ParticipantsPage() {
     fetchParticipants()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination, sort, searchVersion])
-
-  useEffect(() => {
-    setExpandedPastMeetings((prev) => {
-      const next: Record<string, boolean> = {}
-      participants.forEach((participant) => {
-        if (participant.id && prev[participant.id]) {
-          next[participant.id] = true
-        }
-      })
-      return next
-    })
-  }, [participants])
 
   useEffect(() => {
     const fetchMeetings = async () => {
@@ -170,14 +157,6 @@ export default function ParticipantsPage() {
     if ((pagination.page || 1) !== 1) {
       setPagination((prev) => ({ ...prev, page: 1 }))
     }
-  }
-
-  const togglePastMeetings = (id?: string) => {
-    if (!id) return
-    setExpandedPastMeetings((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }))
   }
 
   const getMeetingName = (meetingId?: string | null) => {
@@ -342,9 +321,8 @@ export default function ParticipantsPage() {
                   {renderSortableHead('개월수', 'months')}
                 </TableHead>
                 <TableHead>{renderSortableHead('회비', 'fee')}</TableHead>
-                <TableHead>현재 모임</TableHead>
+                <TableHead>참여 모임</TableHead>
                 <TableHead>비고</TableHead>
-                <TableHead>이전 모임</TableHead>
                 <TableHead className="whitespace-nowrap">
                   {renderSortableHead('등록일', 'created_at')}
                 </TableHead>
@@ -354,82 +332,53 @@ export default function ParticipantsPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center">
+                  <TableCell colSpan={10} className="text-center">
                     로딩 중...
                   </TableCell>
                 </TableRow>
               ) : participants.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center">
+                  <TableCell colSpan={10} className="text-center">
                     참여자가 없습니다
                   </TableCell>
                 </TableRow>
               ) : (
                 participants.map((participant) => (
-                  <Fragment key={participant.id}>
-                    <TableRow>
-                      <TableCell className="font-medium">{participant.name}</TableCell>
-                      <TableCell>{participant.gender === 'male' ? '남성' : '여성'}</TableCell>
-                      <TableCell>{participant.age}세</TableCell>
-                      <TableCell>{participant.phone}</TableCell>
-                      <TableCell>{participant.months}개월</TableCell>
-                      <TableCell>{participant.fee.toLocaleString()}원</TableCell>
-                      <TableCell>{getMeetingName(participant.current_meeting_id)}</TableCell>
-                      <TableCell>{participant.notes || '-'}</TableCell>
-                      <TableCell>
-                        {participant.past_meetings?.length ? (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => togglePastMeetings(participant.id)}
-                          >
-                            {expandedPastMeetings[participant.id ?? ''] ? '숨기기' : '보기'}
-                          </Button>
-                        ) : (
-                          <span className="text-sm text-stone-500">기록 없음</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {participant.created_at
-                          ? new Date(participant.created_at).toLocaleDateString('ko-KR')
-                          : '-'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEditClick(participant)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                            수정
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDeleteClick(participant)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            삭제
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    {expandedPastMeetings[participant.id ?? ''] && (
-                      <TableRow className="bg-stone-50">
-                        <TableCell colSpan={11}>
-                          <div className="flex flex-col gap-2 text-sm">
-                            <div className="font-semibold text-stone-700">이전 모임 기록</div>
-                            <div className="text-stone-700">
-                              {participant.past_meetings?.length
-                                ? participant.past_meetings.join(', ')
-                                : '이전 모임 기록이 없습니다'}
-                            </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </Fragment>
+                  <TableRow key={participant.id}>
+                    <TableCell className="font-medium">{participant.name}</TableCell>
+                    <TableCell>{participant.gender === 'male' ? '남성' : '여성'}</TableCell>
+                    <TableCell>{participant.age}세</TableCell>
+                    <TableCell>{participant.phone}</TableCell>
+                    <TableCell>{participant.months}개월</TableCell>
+                    <TableCell>{participant.fee.toLocaleString()}원</TableCell>
+                    <TableCell>{getMeetingName(participant.current_meeting_id)}</TableCell>
+                    <TableCell>{participant.notes || '-'}</TableCell>
+                    <TableCell>
+                      {participant.created_at
+                        ? new Date(participant.created_at).toLocaleDateString('ko-KR')
+                        : '-'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditClick(participant)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          수정
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteClick(participant)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          삭제
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
             </TableBody>

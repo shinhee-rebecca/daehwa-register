@@ -237,7 +237,7 @@ export function ParticipantForm({
 
         {/* Current Meeting */}
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="current_meeting_id">현재 모임</Label>
+          <Label htmlFor="current_meeting_id">참여 모임</Label>
           <Select
             value={currentMeetingId ?? 'none'}
             onValueChange={(value) =>

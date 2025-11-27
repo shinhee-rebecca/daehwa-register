@@ -238,7 +238,7 @@ export default function LeaderDashboardPage() {
                   {renderSortableHead('개월수', 'months')}
                 </TableHead>
                 <TableHead>{renderSortableHead('회비', 'fee')}</TableHead>
-                <TableHead>현재 모임</TableHead>
+                <TableHead>참여 모임</TableHead>
                 <TableHead className="whitespace-nowrap">
                   {renderSortableHead('등록일', 'created_at')}
                 </TableHead>

@@ -3,6 +3,12 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { Provider } from 'jotai'
 import { ParticipantFilters } from './participant-filters'
 
+vi.mock('@/lib/services/meeting', () => ({
+  MeetingService: class {
+    listNames = vi.fn().mockResolvedValue([])
+  },
+}))
+
 describe('ParticipantFilters', () => {
   it('should render all filter inputs', () => {
     render(
@@ -36,7 +42,7 @@ describe('ParticipantFilters', () => {
       </Provider>
     )
 
-    const searchButton = screen.getByText('조회하기')
+    const searchButton = screen.getByRole('button', { name: '조회하기' })
     fireEvent.click(searchButton)
 
     expect(mockOnSearch).toHaveBeenCalled()

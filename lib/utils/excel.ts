@@ -18,9 +18,8 @@ const PARTICIPANT_HEADERS: Record<string, string> = {
   fee: '회비',
   re_registration: '재등록',
   latest_registration: '최근 등록',
-  current_meeting_id: '현재 모임',
+  current_meeting_id: '참여 모임',
   notes: '비고',
-  past_meetings: '과거 모임',
   created_at: '등록일',
 }
 
@@ -46,7 +45,6 @@ function participantToExcelRow(
       (meetingNameResolver?.(participant.current_meeting_id) ??
         participant.current_meeting_id) || '',
     [PARTICIPANT_HEADERS.notes]: participant.notes || '',
-    [PARTICIPANT_HEADERS.past_meetings]: participant.past_meetings?.join(', ') || '',
     [PARTICIPANT_HEADERS.created_at]: participant.created_at
       ? new Date(participant.created_at).toLocaleDateString('ko-KR')
       : '',

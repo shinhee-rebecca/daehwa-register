@@ -105,7 +105,7 @@ function RangeField({
   className,
 }: RangeFieldProps) {
   return (
-    <div className={cn('space-y-3 md:col-span-2', className)}>
+    <div className={cn('space-y-3 sm:col-span-2 max-w-xl', className)}>
       <div className="flex items-center justify-between text-sm">
         <Label>{label}</Label>
         <span className="text-xs text-muted-foreground">
@@ -254,16 +254,16 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <Search className="h-5 w-5" />
           검색 및 필터
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <CardContent className="space-y-6 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
           {/* Name Search */}
-          <div className="space-y-2 max-w-[6rem]">
+          <div className="space-y-2">
             <Label htmlFor="name">이름</Label>
             <Input
               id="name"
@@ -307,7 +307,7 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
               onValueChange={handleCurrentMeetingChange}
               disabled={meetingsLoading}
             >
-              <SelectTrigger id="current_meeting_id">
+              <SelectTrigger id="current_meeting_id" className="w-full">
                 <SelectValue placeholder="전체" />
               </SelectTrigger>
               <SelectContent>
@@ -365,7 +365,7 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
           />
 
           {/* First Registration Month */}
-          <div className="space-y-2 max-w-[10rem]">
+          <div className="space-y-2">
             <Label htmlFor="first_registration_month">첫 등록월</Label>
             <Input
               id="first_registration_month"
@@ -376,7 +376,7 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
           </div>
 
           {/* Latest Registration */}
-          <div className="space-y-2 max-w-[10rem]">
+          <div className="space-y-2">
             <Label htmlFor="latest_registration">최근 등록월</Label>
             <Input
               id="latest_registration"
@@ -387,9 +387,9 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-stone-500">
-            조건을 모두 입력한 뒤 <span className="font-semibold text-stone-700">조회하기</span>를 누르면 검색합니다.
+        <div className="flex flex-col gap-3 border-t border-border/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-muted-foreground">
+            조건을 입력하고 <span className="font-semibold text-foreground">조회하기</span>를 눌러 검색하세요.
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={handleReset}>

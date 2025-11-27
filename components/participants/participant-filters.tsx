@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useAtom } from 'jotai'
 import {
   paginationAtom,
@@ -240,6 +240,11 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
     onSearch?.()
   }
 
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault()
+    handleSearch()
+  }
+
   useEffect(() => {
     const fetchMeetings = async () => {
       setMeetingsLoading(true)
@@ -260,15 +265,16 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
   }, [])
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <Search className="h-5 w-5" />
-          검색 및 필터
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6 pt-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
+    <form onSubmit={handleSubmit}>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            검색 및 필터
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
           {/* Name Search */}
           <div className="space-y-2">
             <Label htmlFor="name">이름</Label>
@@ -404,21 +410,22 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
               onChange={(e) => handleParticipationMonthChange(e.target.value)}
             />
           </div>
-        </div>
-
-        <div className="flex flex-col gap-3 border-t border-border/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-muted-foreground">
-            조건을 입력하고 <span className="font-semibold text-foreground">조회하기</span>를 눌러 검색하세요.
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleReset}>
-              <X className="mr-2 h-4 w-4" />
-              필터 초기화
-            </Button>
-            <Button onClick={handleSearch}>조회하기</Button>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+
+          <div className="flex flex-col gap-3 border-t border-border/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-muted-foreground">
+              조건을 입력하고 <span className="font-semibold text-foreground">조회하기</span>를 눌러 검색하세요.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={handleReset} type="button">
+                <X className="mr-2 h-4 w-4" />
+                필터 초기화
+              </Button>
+              <Button type="submit">조회하기</Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </form>
   )
 }

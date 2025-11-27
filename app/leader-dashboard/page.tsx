@@ -35,6 +35,8 @@ import {
 } from '@/lib/utils/excel'
 import { toast } from 'sonner'
 import { userAtom } from '@/lib/store/auth'
+import { LeaderService, type LeaderWithMeeting } from '@/lib/services/leader'
+import { MeetingService, type MeetingOption } from '@/lib/services/meeting'
 
 export default function LeaderDashboardPage() {
   const [user] = useAtom(userAtom)
@@ -49,15 +51,54 @@ export default function LeaderDashboardPage() {
   })
   const [searchVersion, setSearchVersion] = useState(1)
   const [exporting, setExporting] = useState(false)
+  const [leaderInfo, setLeaderInfo] = useState<LeaderWithMeeting | null>(null)
+  const [meetingOptions, setMeetingOptions] = useState<MeetingOption[]>([])
+
+  useEffect(() => {
+    const fetchLeaderInfo = async () => {
+      if (!user?.email) return
+
+      try {
+        const leaderService = new LeaderService()
+        const info = await leaderService.getCurrentLeader(user.email)
+        setLeaderInfo(info)
+      } catch (error) {
+        console.error('Failed to fetch leader info:', error)
+        toast.error('리더 정보를 불러오는 데 실패했습니다')
+      }
+    }
+
+    const fetchMeetings = async () => {
+      try {
+        const meetingService = new MeetingService()
+        const options = await meetingService.listNames()
+        setMeetingOptions(options)
+      } catch (error) {
+        console.error('Failed to fetch meetings:', error)
+      }
+    }
+
+    fetchLeaderInfo()
+    fetchMeetings()
+  }, [user])
 
   const fetchParticipants = async () => {
+    if (!leaderInfo?.assigned_meeting_id) {
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     try {
       const service = new ParticipantService()
 
-      // TODO: 리더의 assigned_meeting_id를 가져와서 필터에 추가
-      // 현재는 모든 데이터를 보여주지만, 추후 리더의 meeting만 필터링
-      const result = await service.search(filters, pagination, sort)
+      // 리더의 담당 모임으로 필터링
+      const leaderFilters = {
+        ...filters,
+        current_meeting_id: leaderInfo.assigned_meeting_id,
+      }
+
+      const result = await service.search(leaderFilters, pagination, sort)
       setParticipants(result.data)
       setTotalPages(result.totalPages)
 
@@ -74,9 +115,11 @@ export default function LeaderDashboardPage() {
   }
 
   useEffect(() => {
-    fetchParticipants()
+    if (leaderInfo) {
+      fetchParticipants()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination, sort, searchVersion])
+  }, [leaderInfo, pagination, sort, searchVersion])
 
   const handleSearch = () => {
     setPagination((prev) => ({ ...prev, page: 1 }))
@@ -121,6 +164,11 @@ export default function LeaderDashboardPage() {
     )
   }
 
+  const getMeetingName = (meetingId?: string | null) => {
+    if (!meetingId) return '-'
+    return meetingOptions.find((meeting) => meeting.id === meetingId)?.name || meetingId
+  }
+
   const handleExportCurrentPage = async () => {
     if (participants.length === 0) {
       toast.error('내보낼 데이터가 없습니다')
@@ -129,7 +177,7 @@ export default function LeaderDashboardPage() {
 
     setExporting(true)
     try {
-      const blob = createParticipantsExcelBlob(participants)
+      const blob = createParticipantsExcelBlob(participants, getMeetingName)
       const now = new Date()
       const dateString = now
         .toISOString()
@@ -150,17 +198,26 @@ export default function LeaderDashboardPage() {
   }
 
   const handleExportAll = async () => {
+    if (!leaderInfo?.assigned_meeting_id) {
+      toast.error('담당 모임 정보를 찾을 수 없습니다')
+      return
+    }
+
     setExporting(true)
     try {
       const service = new ParticipantService()
-      const allParticipants = await service.searchAll(filters, sort)
+      const leaderFilters = {
+        ...filters,
+        current_meeting_id: leaderInfo.assigned_meeting_id,
+      }
+      const allParticipants = await service.searchAll(leaderFilters, sort)
 
       if (allParticipants.length === 0) {
         toast.error('내보낼 데이터가 없습니다')
         return
       }
 
-      const blob = createParticipantsExcelBlob(allParticipants)
+      const blob = createParticipantsExcelBlob(allParticipants, getMeetingName)
       const now = new Date()
       const dateString = now
         .toISOString()
@@ -187,7 +244,11 @@ export default function LeaderDashboardPage() {
           <div>
             <h1 className="text-2xl font-bold md:text-3xl">참여자 조회</h1>
             <p className="text-sm text-stone-500 mt-2">
-              {user?.email ? `${user.email}님의 담당 모임` : '리더 대시보드'}
+              {leaderInfo?.meeting_name
+                ? `담당 모임: ${leaderInfo.meeting_name}`
+                : user?.email
+                  ? `${user.email}님의 담당 모임`
+                  : '리더 대시보드'}
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -224,108 +285,118 @@ export default function LeaderDashboardPage() {
           <ParticipantFilters onSearch={handleSearch} />
         </div>
 
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{renderSortableHead('이름', 'name')}</TableHead>
-                <TableHead>성별</TableHead>
-                <TableHead className="whitespace-nowrap">
-                  {renderSortableHead('나이', 'age')}
-                </TableHead>
-                <TableHead>전화번호</TableHead>
-                <TableHead className="whitespace-nowrap">
-                  {renderSortableHead('개월수', 'months')}
-                </TableHead>
-                <TableHead>{renderSortableHead('회비', 'fee')}</TableHead>
-                <TableHead>참여 모임</TableHead>
-                <TableHead className="whitespace-nowrap">
-                  {renderSortableHead('등록일', 'created_at')}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center">
-                    로딩 중...
-                  </TableCell>
-                </TableRow>
-              ) : participants.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center">
-                    참여자가 없습니다
-                  </TableCell>
-                </TableRow>
-              ) : (
-                participants.map((participant) => (
-                  <TableRow key={participant.id}>
-                    <TableCell className="font-medium">{participant.name}</TableCell>
-                    <TableCell>{participant.gender === 'male' ? '남성' : '여성'}</TableCell>
-                    <TableCell>{participant.age}세</TableCell>
-                    <TableCell>{participant.phone}</TableCell>
-                    <TableCell>{participant.months}개월</TableCell>
-                    <TableCell>{participant.fee.toLocaleString()}원</TableCell>
-                    <TableCell>{participant.current_meeting_id || '-'}</TableCell>
-                    <TableCell>
-                      {participant.created_at
-                        ? new Date(participant.created_at).toLocaleDateString('ko-KR')
-                        : '-'}
-                    </TableCell>
+        {!leaderInfo?.assigned_meeting_id && !loading ? (
+          <div className="rounded-md border p-8 text-center">
+            <p className="text-stone-500">
+              담당 모임이 지정되지 않았습니다. 관리자에게 문의하세요.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{renderSortableHead('이름', 'name')}</TableHead>
+                    <TableHead>성별</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      {renderSortableHead('나이', 'age')}
+                    </TableHead>
+                    <TableHead>전화번호</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      {renderSortableHead('개월수', 'months')}
+                    </TableHead>
+                    <TableHead>{renderSortableHead('회비', 'fee')}</TableHead>
+                    <TableHead>참여 모임</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      {renderSortableHead('등록일', 'created_at')}
+                    </TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center">
+                        로딩 중...
+                      </TableCell>
+                    </TableRow>
+                  ) : participants.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center">
+                        참여자가 없습니다
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    participants.map((participant) => (
+                      <TableRow key={participant.id}>
+                        <TableCell className="font-medium">{participant.name}</TableCell>
+                        <TableCell>{participant.gender === 'male' ? '남성' : '여성'}</TableCell>
+                        <TableCell>{participant.age}세</TableCell>
+                        <TableCell>{participant.phone}</TableCell>
+                        <TableCell>{participant.months}개월</TableCell>
+                        <TableCell>{participant.fee.toLocaleString()}원</TableCell>
+                        <TableCell>{getMeetingName(participant.current_meeting_id)}</TableCell>
+                        <TableCell>
+                          {participant.created_at
+                            ? new Date(participant.created_at).toLocaleDateString('ko-KR')
+                            : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
 
-        {!loading && totalPages > 0 && (
-          <div className="mt-4 flex flex-col items-center gap-2">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(event) => {
-                      event.preventDefault()
-                      handlePageChange((pagination.page || 1) - 1)
-                    }}
-                    className="cursor-pointer"
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages }, (_, index) => {
-                  const pageNumber = index + 1
-                  return (
-                    <PaginationItem key={pageNumber}>
-                      <PaginationLink
+            {!loading && totalPages > 0 && (
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
                         href="#"
-                        isActive={pagination.page === pageNumber}
                         onClick={(event) => {
                           event.preventDefault()
-                          handlePageChange(pageNumber)
+                          handlePageChange((pagination.page || 1) - 1)
                         }}
-                      >
-                        {pageNumber}
-                      </PaginationLink>
+                        className="cursor-pointer"
+                      />
                     </PaginationItem>
-                  )
-                })}
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(event) => {
-                      event.preventDefault()
-                      handlePageChange((pagination.page || 1) + 1)
-                    }}
-                    className="cursor-pointer"
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-            <div className="text-sm text-stone-500">
-              페이지 {pagination.page} / {totalPages}
-            </div>
-          </div>
+                    {Array.from({ length: totalPages }, (_, index) => {
+                      const pageNumber = index + 1
+                      return (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink
+                            href="#"
+                            isActive={pagination.page === pageNumber}
+                            onClick={(event) => {
+                              event.preventDefault()
+                              handlePageChange(pageNumber)
+                            }}
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    })}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(event) => {
+                          event.preventDefault()
+                          handlePageChange((pagination.page || 1) + 1)
+                        }}
+                        className="cursor-pointer"
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+                <div className="text-sm text-stone-500">
+                  페이지 {pagination.page} / {totalPages}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </ProtectedRoute>

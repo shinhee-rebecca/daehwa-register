@@ -14,6 +14,26 @@ const leaderWithMeetingSchema = leaderSchema.extend({
 export type LeaderWithMeeting = z.infer<typeof leaderWithMeetingSchema>
 
 export class LeaderService {
+  async getCurrentLeader(email: string): Promise<LeaderWithMeeting> {
+    const response = await fetch('/api/leaders/me', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+
+    const payload = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      const message =
+        typeof payload?.error === 'string'
+          ? payload.error
+          : '리더 정보 조회에 실패했습니다.'
+      throw new Error(message)
+    }
+
+    return leaderWithMeetingSchema.parse(payload)
+  }
+
   async list(): Promise<LeaderWithMeeting[]> {
     const response = await fetch('/api/leaders', {
       method: 'GET',

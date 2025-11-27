@@ -234,7 +234,7 @@ export default function ParticipantsPage() {
 
     setExporting(true)
     try {
-      const blob = createParticipantsExcelBlob(participants)
+      const blob = createParticipantsExcelBlob(participants, getMeetingName)
       const now = new Date()
       const dateString = now
         .toISOString()
@@ -265,7 +265,7 @@ export default function ParticipantsPage() {
         return
       }
 
-      const blob = createParticipantsExcelBlob(allParticipants)
+      const blob = createParticipantsExcelBlob(allParticipants, getMeetingName)
       const now = new Date()
       const dateString = now
         .toISOString()

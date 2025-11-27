@@ -27,7 +27,10 @@ const PARTICIPANT_HEADERS: Record<string, string> = {
 /**
  * 참여자 데이터를 Excel 행 데이터로 변환
  */
-function participantToExcelRow(participant: Participant): Record<string, unknown> {
+function participantToExcelRow(
+  participant: Participant,
+  meetingNameResolver?: (meetingId?: string | null) => string
+): Record<string, unknown> {
   return {
     [PARTICIPANT_HEADERS.name]: participant.name,
     [PARTICIPANT_HEADERS.gender]: participant.gender === 'male' ? '남성' : '여성',
@@ -39,7 +42,9 @@ function participantToExcelRow(participant: Participant): Record<string, unknown
     [PARTICIPANT_HEADERS.fee]: participant.fee,
     [PARTICIPANT_HEADERS.re_registration]: participant.re_registration ? '예' : '아니오',
     [PARTICIPANT_HEADERS.latest_registration]: participant.latest_registration || '',
-    [PARTICIPANT_HEADERS.current_meeting_id]: participant.current_meeting_id || '',
+    [PARTICIPANT_HEADERS.current_meeting_id]:
+      (meetingNameResolver?.(participant.current_meeting_id) ??
+        participant.current_meeting_id) || '',
     [PARTICIPANT_HEADERS.notes]: participant.notes || '',
     [PARTICIPANT_HEADERS.past_meetings]: participant.past_meetings?.join(', ') || '',
     [PARTICIPANT_HEADERS.created_at]: participant.created_at
@@ -56,14 +61,17 @@ function participantToExcelRow(participant: Participant): Record<string, unknown
  */
 export function exportParticipantsToExcel(
   participants: Participant[],
-  filename?: string
+  filename?: string,
+  meetingNameResolver?: (meetingId?: string | null) => string
 ): void {
   if (participants.length === 0) {
     throw new Error('내보낼 데이터가 없습니다')
   }
 
   // 데이터를 Excel 행으로 변환
-  const excelData = participants.map(participantToExcelRow)
+  const excelData = participants.map((participant) =>
+    participantToExcelRow(participant, meetingNameResolver)
+  )
 
   // 워크북 생성
   const worksheet = XLSX.utils.json_to_sheet(excelData)
@@ -110,15 +118,21 @@ export function exportParticipantsToExcel(
  * 브라우저 다운로드를 위한 Blob 생성
  *
  * @param participants - 내보낼 참여자 목록
+ * @param meetingNameResolver - 모임 ID를 이름으로 변환하는 함수
  * @returns Excel 파일의 Blob 객체
  */
-export function createParticipantsExcelBlob(participants: Participant[]): Blob {
+export function createParticipantsExcelBlob(
+  participants: Participant[],
+  meetingNameResolver?: (meetingId?: string | null) => string
+): Blob {
   if (participants.length === 0) {
     throw new Error('내보낼 데이터가 없습니다')
   }
 
   // 데이터를 Excel 행으로 변환
-  const excelData = participants.map(participantToExcelRow)
+  const excelData = participants.map((participant) =>
+    participantToExcelRow(participant, meetingNameResolver)
+  )
 
   // 워크북 생성
   const worksheet = XLSX.utils.json_to_sheet(excelData)

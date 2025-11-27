@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAtom } from 'jotai'
 import {
   paginationAtom,
   participantFiltersAtom,
   resetFiltersAtom,
 } from '@/lib/store/participant'
+import { MeetingService, type MeetingOption } from '@/lib/services/meeting'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,6 +29,9 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
   const [filters, setFilters] = useAtom(participantFiltersAtom)
   const [, resetFilters] = useAtom(resetFiltersAtom)
   const [, setPagination] = useAtom(paginationAtom)
+  const [meetings, setMeetings] = useState<MeetingOption[]>([])
+  const [meetingsLoading, setMeetingsLoading] = useState(false)
+  const [meetingsError, setMeetingsError] = useState<string | null>(null)
 
   const [localFilters, setLocalFilters] = useState({
     name: filters.name || '',
@@ -41,6 +45,7 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
     first_registration_month: filters.first_registration_month || '',
     latest_registration: filters.latest_registration || '',
     gender: filters.gender || 'all',
+    current_meeting_id: filters.current_meeting_id || 'all',
     re_registration:
       filters.re_registration === undefined
         ? 'all'
@@ -69,6 +74,10 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
       localFilters.gender === 'all'
         ? undefined
         : (localFilters.gender as 'male' | 'female'),
+    current_meeting_id:
+      localFilters.current_meeting_id === 'all'
+        ? undefined
+        : localFilters.current_meeting_id,
     re_registration:
       localFilters.re_registration === 'all'
         ? undefined
@@ -85,6 +94,10 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
 
   const handleGenderChange = (value: string) => {
     setLocalFilters((prev) => ({ ...prev, gender: value }))
+  }
+
+  const handleCurrentMeetingChange = (value: string) => {
+    setLocalFilters((prev) => ({ ...prev, current_meeting_id: value }))
   }
 
   const handleAgeMinChange = (value: string) => {
@@ -143,12 +156,32 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
       first_registration_month: '',
       latest_registration: '',
       gender: 'all',
+      current_meeting_id: 'all',
       re_registration: 'all',
     })
     resetFilters()
     setPagination((prev) => ({ ...prev, page: 1 }))
     onSearch?.()
   }
+
+  useEffect(() => {
+    const fetchMeetings = async () => {
+      setMeetingsLoading(true)
+      setMeetingsError(null)
+      try {
+        const service = new MeetingService()
+        const options = await service.listNames()
+        setMeetings(options)
+      } catch (error) {
+        console.error(error)
+        setMeetingsError('모임 목록을 불러오지 못했습니다.')
+      } finally {
+        setMeetingsLoading(false)
+      }
+    }
+
+    fetchMeetings()
+  }, [])
 
   return (
     <Card>
@@ -187,6 +220,31 @@ export function ParticipantFilters({ onSearch }: ParticipantFiltersProps) {
                 <SelectItem value="female">여성</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Current Meeting */}
+          <div className="space-y-2">
+            <Label htmlFor="current_meeting_id">현재 모임</Label>
+            <Select
+              value={localFilters.current_meeting_id}
+              onValueChange={handleCurrentMeetingChange}
+              disabled={meetingsLoading}
+            >
+              <SelectTrigger id="current_meeting_id">
+                <SelectValue placeholder="전체" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체</SelectItem>
+                {meetings.map((meeting) => (
+                  <SelectItem key={meeting.id} value={meeting.id}>
+                    {meeting.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {meetingsError && (
+              <p className="text-xs text-red-600">{meetingsError}</p>
+            )}
           </div>
 
           {/* Phone Search */}

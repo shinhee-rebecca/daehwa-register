@@ -1,7 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
-import { Provider } from 'jotai'
+import { Provider, createStore } from 'jotai'
+import { authInitializedAtom, userAtom } from '@/lib/store/auth'
 import ParticipantsPage from './page'
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    replace: vi.fn(),
+    push: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  usePathname: () => '/participants',
+}))
 
 // Mock the ParticipantService
 const mockSearch = vi.fn().mockResolvedValue({
@@ -17,9 +27,9 @@ const mockSearch = vi.fn().mockResolvedValue({
       fee: 50000,
       re_registration: false,
       latest_registration: '2024-03',
-      current_meeting: '독서 모임 A',
+      current_meeting_id: 'meeting-1',
       notes: '테스트 노트',
-      past_meetings: '독서 모임 B',
+      past_meetings: [],
       created_at: '2024-01-01',
       updated_at: '2024-03-01',
     },
@@ -31,6 +41,9 @@ const mockSearch = vi.fn().mockResolvedValue({
 })
 
 const mockDelete = vi.fn().mockResolvedValue(undefined)
+const mockListMeetings = vi.fn().mockResolvedValue([
+  { id: 'meeting-1', name: '독서 모임 A' },
+])
 
 vi.mock('@/lib/services/participant', () => ({
   ParticipantService: class {
@@ -39,17 +52,37 @@ vi.mock('@/lib/services/participant', () => ({
   },
 }))
 
+vi.mock('@/lib/services/meeting', () => ({
+  MeetingService: class {
+    listNames = mockListMeetings
+  },
+}))
+
+const buildStore = () => {
+  const store = createStore()
+  store.set(authInitializedAtom, true)
+  store.set(userAtom, {
+    id: 'admin-1',
+    email: 'admin@example.com',
+    role: 'admin' as const,
+  })
+  return store
+}
+
+const renderWithProvider = () =>
+  render(
+    <Provider store={buildStore()}>
+      <ParticipantsPage />
+    </Provider>
+  )
+
 describe('ParticipantsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('should render participants list page title', async () => {
-    render(
-      <Provider>
-        <ParticipantsPage />
-      </Provider>
-    )
+    renderWithProvider()
 
     await waitFor(() => {
       expect(screen.getByText('참여자 관리')).toBeDefined()
@@ -57,24 +90,17 @@ describe('ParticipantsPage', () => {
   })
 
   it('should display participant data in table', async () => {
-    render(
-      <Provider>
-        <ParticipantsPage />
-      </Provider>
-    )
+    renderWithProvider()
 
     await waitFor(() => {
       expect(screen.getByText('홍길동')).toBeDefined()
       expect(screen.getByText('010-1234-5678')).toBeDefined()
+      expect(screen.getByText('독서 모임 A')).toBeDefined()
     })
   })
 
   it('should have add participant button', async () => {
-    render(
-      <Provider>
-        <ParticipantsPage />
-      </Provider>
-    )
+    renderWithProvider()
 
     await waitFor(() => {
       const addButton = screen.getByText('참여자 추가')
@@ -83,11 +109,7 @@ describe('ParticipantsPage', () => {
   })
 
   it('should show pagination controls when total pages exist', async () => {
-    render(
-      <Provider>
-        <ParticipantsPage />
-      </Provider>
-    )
+    renderWithProvider()
 
     await waitFor(() => {
       expect(screen.getByText('페이지 1 / 2')).toBeDefined()
@@ -96,11 +118,7 @@ describe('ParticipantsPage', () => {
   })
 
   it('should open delete dialog and call delete handler', async () => {
-    render(
-      <Provider>
-        <ParticipantsPage />
-      </Provider>
-    )
+    renderWithProvider()
 
     const deleteButton = await screen.findByText('삭제')
     fireEvent.click(deleteButton)
@@ -114,11 +132,7 @@ describe('ParticipantsPage', () => {
   })
 
   it('should request sorting when clicking sortable header', async () => {
-    render(
-      <Provider>
-        <ParticipantsPage />
-      </Provider>
-    )
+    renderWithProvider()
 
     const nameHeader = await screen.findByRole('button', { name: /이름/ })
     fireEvent.click(nameHeader)

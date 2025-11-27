@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createParticipantSchema, type CreateParticipant, type Participant } from '@/lib/validations/participant'
 import { ParticipantService } from '@/lib/services/participant'
+import { type MeetingOption } from '@/lib/services/meeting'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,9 +22,17 @@ interface ParticipantFormProps {
   participant?: Participant
   onSuccess: () => void
   onCancel: () => void
+  meetingOptions?: MeetingOption[]
+  meetingsLoading?: boolean
 }
 
-export function ParticipantForm({ participant, onSuccess, onCancel }: ParticipantFormProps) {
+export function ParticipantForm({
+  participant,
+  onSuccess,
+  onCancel,
+  meetingOptions = [],
+  meetingsLoading = false,
+}: ParticipantFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isEdit = !!participant
@@ -70,6 +79,7 @@ export function ParticipantForm({ participant, onSuccess, onCancel }: Participan
   })
 
   const gender = watch('gender')
+  const currentMeetingId = watch('current_meeting_id')
 
   const onSubmit = async (data: CreateParticipant) => {
     setLoading(true)
@@ -223,6 +233,35 @@ export function ParticipantForm({ participant, onSuccess, onCancel }: Participan
               <SelectItem value="true">재등록</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Current Meeting */}
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="current_meeting_id">현재 모임</Label>
+          <Select
+            value={currentMeetingId ?? 'none'}
+            onValueChange={(value) =>
+              setValue('current_meeting_id', value === 'none' ? null : value)
+            }
+            disabled={meetingsLoading}
+          >
+            <SelectTrigger id="current_meeting_id">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">배정 안 함</SelectItem>
+              {meetingOptions.map((meeting) => (
+                <SelectItem key={meeting.id} value={meeting.id}>
+                  {meeting.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.current_meeting_id && (
+            <p className="text-sm text-red-600">
+              {String(errors.current_meeting_id.message)}
+            </p>
+          )}
         </div>
 
         {/* Notes */}
